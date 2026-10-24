@@ -119,6 +119,40 @@ main#main-content{position:relative;isolation:isolate}
  .hero-atmosphere{display:none}
 }
 @media(max-width:380px){.head-inner nav a{font-size:10px}.hero h1{font-size:52px}.gym-card-photo{height:200px}}
+
+/* Compact phone composition. Desktop styling deliberately untouched. */
+@media(max-width:767px){
+ .wrap{padding-inline:18px}
+ .head-inner{padding-block:12px;gap:10px}
+ .brand{font-size:21px}
+ .head-inner nav{gap:4px}
+ .head-inner nav a{font-size:10px;padding:7px 1px;border:0;border-bottom:1px solid #39453b;border-radius:0}
+ .hero{padding-top:36px;padding-bottom:48px;gap:23px}
+ .hero .eyebrow{font-size:9px;letter-spacing:.1em}
+ .hero h1{font-size:clamp(43px,10vw,55px);margin:16px 0;line-height:1.03}
+ .hero .lead{font-size:14px;line-height:1.65;margin:0}
+ .hero-links{margin-top:20px;gap:18px;font-size:12px}
+ .hero .terminal{font-size:11px;box-shadow:3px 4px 0 #222b25;min-height:0}
+ .terminal-bar{padding:8px 12px}
+ .terminal-inner{padding:14px 12px}
+ .terminal .out{margin-bottom:9px}
+ .terminal-hint{font-size:10px;margin-top:12px;gap:3px 6px}
+ .terminal-hint button{min-height:26px}
+ .section{padding-top:48px;padding-bottom:53px}
+ .section h2{font-size:clamp(31px,8vw,39px)}
+ .section-note{font-size:12px;margin-top:10px}
+ .personal-feature{gap:15px;margin-bottom:18px}
+ .personal-feature .personal-lead{font-size:17px;line-height:1.55}
+ .personal-feature-photo{max-width:240px;height:220px}
+ .personal-card{padding:17px;min-height:0}
+ .personal-card h3{font-size:20px;margin:11px 0}
+ .personal-card p{font-size:13px;line-height:1.7}
+ .personal-card .personal-mark{font-size:15px}
+ .gym-card-photo{height:160px;max-width:260px;margin-bottom:14px}
+ .personal-grid{gap:10px}
+ .personal-outro{margin-top:20px}
+}
+@media(max-width:380px){.hero h1{font-size:43px}.gym-card-photo{height:145px}}
 </style></head><body id="top"><a class="skip-link" href="#main-content">Skip to content</a><header class="header"><div class="wrap head-inner"><a href="#top" class="brand">denis<span class="end">.zone</span></a><nav aria-label="Main navigation"><a href="#work"><svg class="ui-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h18v13H3zM8 7V4h8v3"/></svg>work</a><a href="experience.html"><svg class="ui-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16M6 16V8m6 8V4m6 12v-6"/></svg>experience</a><a href="#about"><svg class="ui-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.5 3-7 8-7s8 2.5 8 7"/></svg>about</a><a href="#contact"><svg class="ui-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>contact ↗</a></nav></div></header><main id="main-content"><div class="hero-atmosphere" aria-hidden="true"><div class="code-feed"><div class="code-feed-content"><span class="command-line">[17:41:02] denis@zone:~$ docker compose ps</span>
 <span class="output-line">[17:41:03] remote: Resolving deltas... done</span>
 <span class="success-line">[17:41:04] ✓ deploy completed  /  production</span>
