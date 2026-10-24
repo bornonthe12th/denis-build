@@ -90,12 +90,13 @@ body{background:radial-gradient(ellipse 70% 420px at 78% 2%,rgba(178,201,151,.04
 .panel-enter{animation:company-reveal .28s ease-out both}
 @keyframes company-reveal{from{opacity:.48;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
 @media(prefers-reduced-motion:reduce){.panel-enter{animation:none}.timeline-progress-fill{transition:none}}
+.chapter-strip{display:flex;align-items:center;gap:16px;padding:0 0 22px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}.chapter-count{font-size:10px;letter-spacing:.1em;color:var(--orange)}.chapter-name{font-size:13px;color:var(--ink);font-weight:550}.chapter-years{font-size:10px;color:var(--muted);margin-left:auto;letter-spacing:.05em}@media(max-width:600px){.chapter-strip{gap:9px;flex-wrap:wrap}.chapter-name{font-size:12px}.chapter-years{font-size:10px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
 </style></head><body>
 <header><div class="wrap header-inner"><a class="brand" href="index.html">denis<span>.zone</span></a><nav class="nav" aria-label="Main navigation"><a href="index.html">home</a><a href="index.html#work">work</a><a class="active" href="experience.html" aria-current="page">experience</a><a href="index.html#contact">contact ↗</a></nav></div></header>
 <main>
 <section class="wrap intro"><div><div class="eyebrow">01 / Career history · 2009—present</div><h1>Things I've<br><em>worked on.</em></h1><p>Software engineering across products, platforms and integrations. Explore the problems, decisions and outcomes behind the work.</p></div><div class="sidebar-intro"><div class="eyebrow">HOW TO EXPLORE</div><p><b>Drag the timeline</b>, scroll across it or select a company. Each stop tells a different part of the story.</p><p>Not a list of buzzwords. Just the work.</p></div></section>
-<section class="timeline-shell" aria-label="Career timeline"><div class="wrap"><div class="t-bar"><span class="hint">← drag / swipe through the years →</span><div class="controls"><button id="prev" aria-label="Previous company">←</button><button id="next" aria-label="Next company">→</button></div></div><div class="rail" id="rail" aria-label="Select a company from the career timeline"></div><div class="timeline-progress" aria-hidden="true"><div class="timeline-progress-fill" id="timeline-progress"></div></div></div></section>
+<section class="timeline-shell" aria-label="Career timeline"><div class="wrap"><div class="t-bar"><span class="hint">← drag / swipe through the years →</span><div class="controls"><button id="prev" aria-label="Previous company">←</button><button id="next" aria-label="Next company">→</button></div></div><div class="chapter-strip" aria-live="polite"><span class="chapter-count" id="chapter-count">CHAPTER 04 / 04</span><span class="chapter-name" id="chapter-name">Designing systems</span><span class="chapter-years" id="chapter-years">2023 — NOW</span></div><div class="rail" id="rail" aria-label="Select a company from the career timeline"></div><div class="timeline-progress" aria-hidden="true"><div class="timeline-progress-fill" id="timeline-progress"></div></div></div></section>
 <section class="wrap panel" aria-live="polite" aria-atomic="true"><div class="panel-side"><span class="index" id="counter"></span><span class="period" id="period"></span><span class="sector" id="sector"></span></div><article class="panel-body"><h2 id="company"></h2><div class="role" id="role"></div><p class="story" id="story"></p><div class="detail"><span class="micro">Engineering contribution</span><p id="work"></p></div><div class="detail"><span class="micro">Why it mattered</span><p id="impact"></p></div><details class="tech-details" id="tech-details"><summary>Under the hood <span aria-hidden="true">↗</span></summary><div class="tags" id="tags"></div></details></article></section>
 <section class="lower"><div class="wrap lower-inner"><div><div class="eyebrow">BEYOND THE TIMELINE</div><h3>Still building.</h3><p>Alongside client and product work, I make smaller things: word games, timing experiments and tools that start with curiosity.</p><a class="link" href="index.html#work">Explore side projects ↗</a></div><div><div class="eyebrow">SAY HELLO</div><h3>Interesting problem?</h3><p>Happy to talk engineering, architecture, integrations or something entirely different.</p><a class="link" href="mailto:hello@denis.zone">hello@denis.zone ↗</a></div></div></section>
 </main><footer><div class="wrap foot"><span>© <span id="year"></span> Denis Martins</span><span><a href="index.html">← Back home</a> &nbsp;·&nbsp; <a href="https://www.linkedin.com/in/martinsdenis/" target="_blank" rel="noopener noreferrer">LinkedIn ↗</a></span></div></footer>
@@ -116,12 +117,15 @@ const items=[
 ];
 let active=items.length-1;
 const rail=document.getElementById('rail'),panel=document.querySelector('.panel-body');
+const chapters=[{until:1,name:"The foundations",years:"2009—2013"},{until:6,name:"Building products",years:"2013—2019"},{until:9,name:"Engineering at scale",years:"2019—2023"},{until:Infinity,name:"Designing systems",years:"2023—NOW"}];
+const slugs=items.map(d=>d.company.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,''));
+const indexForHash=()=>slugs.indexOf(decodeURIComponent(location.hash.slice(1)).toLowerCase());
 const reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
-const buttons=items.map((d,i)=>{const b=document.createElement('button');b.className='stop';b.type='button';b.innerHTML='<span class="year">'+d.year+'</span><span class="company">'+d.company+'</span>';b.addEventListener('click',()=>{if(!dragged)show(i)});rail.appendChild(b);return b;});
+const buttons=items.map((d,i)=>{const b=document.createElement('button');b.className='stop';b.type='button';b.innerHTML='<span class="year">'+d.year+'</span><span class="company">'+d.company+'</span>';b.addEventListener('click',()=>{if(!dragged)show(i,true,true)});rail.appendChild(b);return b;});
 let fadeTimer=null;
-function show(i,scroll=true){
+function show(i,scroll=true,updateHash=false){
  const next=Math.max(0,Math.min(i,items.length-1)),changed=next!==active;active=next;
- const d=items[active];
+ const d=items[active];const chapterIndex=chapters.findIndex(c=>active<=c.until),chapter=chapters[chapterIndex];document.getElementById('chapter-count').textContent='CHAPTER '+String(chapterIndex+1).padStart(2,'0')+' / 04';document.getElementById('chapter-name').textContent=chapter.name;document.getElementById('chapter-years').textContent=chapter.years;if(updateHash)history.replaceState(null,'','#'+slugs[active]);
  if(changed&&!reduced.matches){panel.classList.remove('panel-enter');void panel.offsetWidth;panel.classList.add('panel-enter');clearTimeout(fadeTimer);fadeTimer=setTimeout(()=>panel.classList.remove('panel-enter'),280)}
  for(const [id,val] of Object.entries({counter:String(active+1).padStart(2,'0')+' / '+String(items.length).padStart(2,'0'),period:d.period,sector:d.sector,company:d.company,role:d.role,story:d.story,work:d.work,impact:d.impact}))document.getElementById(id).textContent=val;
  const tags=document.getElementById('tags');
@@ -133,8 +137,8 @@ function show(i,scroll=true){
  if(scroll)buttons[active].scrollIntoView({behavior:reduced.matches?'auto':'smooth',block:'nearest',inline:'center'});
  document.getElementById('prev').disabled=active===0;document.getElementById('next').disabled=active===items.length-1;
 }
-document.getElementById('prev').onclick=()=>show(active-1);
-document.getElementById('next').onclick=()=>show(active+1);
+document.getElementById('prev').onclick=()=>show(active-1,true,true);
+document.getElementById('next').onclick=()=>show(active+1,true,true);
 document.getElementById('year').textContent=new Date().getFullYear();
 // Drag horizontally with a mouse, or swipe naturally on touchscreens.
 // Selection follows the stop nearest the center of the visible rail.
@@ -144,8 +148,10 @@ function updateFromScroll(){cancelAnimationFrame(scrollFrame);scrollFrame=reques
 rail.addEventListener('scroll',updateFromScroll,{passive:true});
 rail.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse'||e.button!==0)return;pointer={id:e.pointerId,x:e.clientX,left:rail.scrollLeft,moved:false};dragged=false;rail.classList.add('is-dragging')});
 window.addEventListener('pointermove',e=>{if(!pointer||e.pointerId!==pointer.id)return;const delta=e.clientX-pointer.x;if(Math.abs(delta)>5)pointer.moved=true;if(pointer.moved){dragged=true;rail.scrollLeft=pointer.left-delta;show(nearestStop(),false)}});
-function finishDrag(){if(!pointer)return;const wasMoved=pointer.moved;pointer=null;rail.classList.remove('is-dragging');if(wasMoved){suppressClick=true;show(nearestStop(),true);setTimeout(()=>{suppressClick=false;dragged=false},80)}else dragged=false}
+function finishDrag(){if(!pointer)return;const wasMoved=pointer.moved;pointer=null;rail.classList.remove('is-dragging');if(wasMoved){suppressClick=true;show(nearestStop(),true,true);setTimeout(()=>{suppressClick=false;dragged=false},80)}else dragged=false}
 window.addEventListener('pointerup',finishDrag);window.addEventListener('pointercancel',finishDrag);
 rail.addEventListener('click',e=>{if(suppressClick){e.preventDefault();e.stopImmediatePropagation()}},true);
-show(active,false);
+document.addEventListener('keydown',e=>{if(e.altKey||e.ctrlKey||e.metaKey||e.shiftKey||['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName))return;if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();show(active+(e.key==='ArrowRight'?1:-1),true,true)}});
+window.addEventListener('hashchange',()=>{const i=indexForHash();if(i>=0)show(i,true,false)});
+const initial=indexForHash();show(initial>=0?initial:active,initial>=0);
 </script></body></html>
