@@ -80,6 +80,12 @@ body{background:radial-gradient(ellipse 70% 420px at 78% 2%,rgba(178,201,151,.04
 .lower-inner>div{min-width:0}
 @media(max-width:850px){.lower{padding:0}.lower>.lower-inner{padding-top:48px;padding-bottom:58px}}
 @media(max-width:600px){.lower{padding:0}.lower>.lower-inner{grid-template-columns:1fr;row-gap:38px;padding-top:42px;padding-bottom:52px}}
+/* Career metadata: clear hierarchy instead of crowded inline text */
+.panel-side{display:flex;flex-direction:column;align-items:flex-start;gap:15px;min-width:0}
+.panel-side .index{display:block;font-size:12px;letter-spacing:.08em;line-height:1.4;color:var(--orange)}
+.panel-side .period{display:block;font-size:15px;line-height:1.5;letter-spacing:-.01em;color:var(--ink);margin:0;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.panel-side .sector{display:inline-flex;align-items:center;width:auto;max-width:100%;font-size:11px;line-height:1.5;letter-spacing:.02em;color:var(--green);border:1px solid #465048;padding:7px 11px;white-space:normal;background:rgba(178,201,151,.035)}
+@media(max-width:850px){.panel-side{display:flex;flex-direction:column;align-items:flex-start;gap:11px}.panel-side .period{font-size:14px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
 </style></head><body>
 <header><div class="wrap header-inner"><a class="brand" href="index.html">denis<span>.zone</span></a><nav class="nav" aria-label="Main navigation"><a href="index.html">home</a><a href="index.html#work">work</a><a class="active" href="experience.html" aria-current="page">experience</a><a href="index.html#contact">contact ↗</a></nav></div></header>
