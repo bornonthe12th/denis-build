@@ -86,6 +86,10 @@ body{background:radial-gradient(ellipse 70% 420px at 78% 2%,rgba(178,201,151,.04
 .panel-side .period{display:block;font-size:15px;line-height:1.5;letter-spacing:-.01em;color:var(--ink);margin:0;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 .panel-side .sector{display:inline-flex;align-items:center;width:auto;max-width:100%;font-size:11px;line-height:1.5;letter-spacing:.02em;color:var(--green);border:1px solid #465048;padding:7px 11px;white-space:normal;background:rgba(178,201,151,.035)}
 @media(max-width:850px){.panel-side{display:flex;flex-direction:column;align-items:flex-start;gap:11px}.panel-side .period{font-size:14px}}
+.rail.is-dragging{cursor:grabbing;scroll-snap-type:none}.rail.is-dragging .stop{cursor:grabbing}
+.panel-enter{animation:company-reveal .28s ease-out both}
+@keyframes company-reveal{from{opacity:.48;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){.panel-enter{animation:none}.timeline-progress-fill{transition:none}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
 </style></head><body>
 <header><div class="wrap header-inner"><a class="brand" href="index.html">denis<span>.zone</span></a><nav class="nav" aria-label="Main navigation"><a href="index.html">home</a><a href="index.html#work">work</a><a class="active" href="experience.html" aria-current="page">experience</a><a href="index.html#contact">contact ↗</a></nav></div></header>
@@ -110,10 +114,38 @@ const items=[
 {company:"Raymond James",period:"Apr 2023 — Mar 2024",year:"2023—24",role:"Software Engineer · Contract",sector:"Financial services",story:"Modernising a business-critical wealth management platform while keeping existing systems stable.",work:"Modernised business-critical wealth management systems, resolving compatibility issues across applications and databases, and strengthening automated tests to reduce release risk.",impact:"Reducing migration risk without sacrificing stability for the users who depended on the platform.",tags:["PHP 8","MySQL 8","Legacy modernisation","Testing"],stack:[["Application modernisation","PHP 7.4 → 8.2 · Legacy PHP platform"],["Database modernisation","MySQL 5.x → MySQL 8 · SQL compatibility"],["Quality & architecture","PHPUnit · Automated regression tests · Domain modelling"],["Delivery","Regulated wealth management systems · Incremental migration"]]},
 {company:"Telecom Acquisitions",period:"Jun 2024 — Present",year:"2024—",role:"Senior Software Engineer",sector:"Telecoms · Energy",story:"Designing and evolving business-critical platforms that connect broadband and energy sales journeys to multiple suppliers and operational systems.",work:"Design supplier-agnostic integration architecture, APIs and event-driven workflows across customer, quotation and sales systems. Own delivery from requirements and domain modelling through cloud deployment, monitoring and production support, while mentoring two developers.",impact:"Make supplier onboarding more repeatable, reduce coupling between systems, and keep high-volume sales operations reliable, observable and easier to evolve.",tags:["Azure App Service","Azure Functions","Azure Service Bus","Docker","Terraform","Datadog","PHP","Laravel","MySQL"],stack:[["Cloud & hosting","Azure App Service · Azure Functions"],["Messaging & integration","Azure Service Bus · REST APIs · Supplier integrations"],["Infrastructure","Docker · Terraform"],["Observability","Datadog · Logging · Distributed tracing"],["Application & data","PHP · Laravel · MySQL"],["Architecture","Event-driven systems · Domain modelling · Supplier-agnostic design"]]}
 ];
-let active=items.length-1;const rail=document.getElementById('rail');const buttons=items.map((d,i)=>{const b=document.createElement('button');b.className='stop';b.type='button';b.innerHTML='<span class="year">'+d.year+'</span><span class="company">'+d.company+'</span>';b.addEventListener('click',()=>show(i));rail.appendChild(b);return b;});
-function show(i,scroll=true){active=Math.max(0,Math.min(i,items.length-1));const d=items[active];for(const [id,val] of Object.entries({counter:String(active+1).padStart(2,'0')+' / '+String(items.length).padStart(2,'0'),period:d.period,sector:d.sector,company:d.company,role:d.role,story:d.story,work:d.work,impact:d.impact}))document.getElementById(id).textContent=val;const tags=document.getElementById('tags');if(d.stack){tags.classList.add('stack-grid');tags.replaceChildren(...d.stack.map(([heading,values])=>{const item=document.createElement('div');item.className='stack-group';const label=document.createElement('span');label.className='stack-label';label.textContent=heading;const value=document.createElement('span');value.className='stack-value';value.textContent=values;item.append(label,value);return item}))}else{tags.classList.remove('stack-grid');tags.replaceChildren(...d.tags.map(t=>{const tag=document.createElement('span');tag.className='tag';tag.textContent=t;return tag}))}document.getElementById("timeline-progress").style.width=((active+1)/items.length*100)+"%";document.getElementById("tech-details").open=false;buttons.forEach((b,n)=>b.setAttribute('aria-pressed',String(n===active)));if(scroll)buttons[active].scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth',block:'nearest',inline:'center'});document.getElementById('prev').disabled=active===0;document.getElementById('next').disabled=active===items.length-1}
-document.getElementById('prev').onclick=()=>show(active-1);document.getElementById('next').onclick=()=>show(active+1);document.getElementById('year').textContent=new Date().getFullYear();
-// Native horizontal overflow works on touch; pointer dragging supports desktop mice.
-let start=null,moved=false,suppress=false;rail.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse'||e.button!==0)return;start={x:e.clientX,left:rail.scrollLeft};moved=false;});window.addEventListener('pointermove',e=>{if(!start)return;const dx=e.clientX-start.x;if(Math.abs(dx)>5){moved=true;rail.scrollLeft=start.left-dx}});window.addEventListener('pointerup',()=>{if(moved)suppress=true;start=null;setTimeout(()=>suppress=false,0)});rail.addEventListener('click',e=>{if(suppress){e.preventDefault();e.stopPropagation()}},true);
+let active=items.length-1;
+const rail=document.getElementById('rail'),panel=document.querySelector('.panel-body');
+const reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
+const buttons=items.map((d,i)=>{const b=document.createElement('button');b.className='stop';b.type='button';b.innerHTML='<span class="year">'+d.year+'</span><span class="company">'+d.company+'</span>';b.addEventListener('click',()=>{if(!dragged)show(i)});rail.appendChild(b);return b;});
+let fadeTimer=null;
+function show(i,scroll=true){
+ const next=Math.max(0,Math.min(i,items.length-1)),changed=next!==active;active=next;
+ const d=items[active];
+ if(changed&&!reduced.matches){panel.classList.remove('panel-enter');void panel.offsetWidth;panel.classList.add('panel-enter');clearTimeout(fadeTimer);fadeTimer=setTimeout(()=>panel.classList.remove('panel-enter'),280)}
+ for(const [id,val] of Object.entries({counter:String(active+1).padStart(2,'0')+' / '+String(items.length).padStart(2,'0'),period:d.period,sector:d.sector,company:d.company,role:d.role,story:d.story,work:d.work,impact:d.impact}))document.getElementById(id).textContent=val;
+ const tags=document.getElementById('tags');
+ if(d.stack){tags.classList.add('stack-grid');tags.replaceChildren(...d.stack.map(([heading,values])=>{const item=document.createElement('div');item.className='stack-group';const label=document.createElement('span');label.className='stack-label';label.textContent=heading;const value=document.createElement('span');value.className='stack-value';value.textContent=values;item.append(label,value);return item}))}
+ else{tags.classList.remove('stack-grid');tags.replaceChildren(...d.tags.map(t=>{const tag=document.createElement('span');tag.className='tag';tag.textContent=t;return tag}))}
+ document.getElementById('timeline-progress').style.width=((active+1)/items.length*100)+'%';
+ document.getElementById('tech-details').open=false;
+ buttons.forEach((b,n)=>b.setAttribute('aria-pressed',String(n===active)));
+ if(scroll)buttons[active].scrollIntoView({behavior:reduced.matches?'auto':'smooth',block:'nearest',inline:'center'});
+ document.getElementById('prev').disabled=active===0;document.getElementById('next').disabled=active===items.length-1;
+}
+document.getElementById('prev').onclick=()=>show(active-1);
+document.getElementById('next').onclick=()=>show(active+1);
+document.getElementById('year').textContent=new Date().getFullYear();
+// Drag horizontally with a mouse, or swipe naturally on touchscreens.
+// Selection follows the stop nearest the center of the visible rail.
+let pointer=null,dragged=false,suppressClick=false,scrollFrame=0;
+function nearestStop(){const middle=rail.getBoundingClientRect().left+rail.clientWidth/2;let index=0,distance=Infinity;buttons.forEach((b,i)=>{const r=b.getBoundingClientRect(),delta=Math.abs(r.left+r.width/2-middle);if(delta<distance){distance=delta;index=i}});return index}
+function updateFromScroll(){cancelAnimationFrame(scrollFrame);scrollFrame=requestAnimationFrame(()=>{if(!pointer||dragged||pointer.moved)show(nearestStop(),false)})}
+rail.addEventListener('scroll',updateFromScroll,{passive:true});
+rail.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse'||e.button!==0)return;pointer={id:e.pointerId,x:e.clientX,left:rail.scrollLeft,moved:false};dragged=false;rail.classList.add('is-dragging')});
+window.addEventListener('pointermove',e=>{if(!pointer||e.pointerId!==pointer.id)return;const delta=e.clientX-pointer.x;if(Math.abs(delta)>5)pointer.moved=true;if(pointer.moved){dragged=true;rail.scrollLeft=pointer.left-delta;show(nearestStop(),false)}});
+function finishDrag(){if(!pointer)return;const wasMoved=pointer.moved;pointer=null;rail.classList.remove('is-dragging');if(wasMoved){suppressClick=true;show(nearestStop(),true);setTimeout(()=>{suppressClick=false;dragged=false},80)}else dragged=false}
+window.addEventListener('pointerup',finishDrag);window.addEventListener('pointercancel',finishDrag);
+rail.addEventListener('click',e=>{if(suppressClick){e.preventDefault();e.stopImmediatePropagation()}},true);
 show(active,false);
 </script></body></html>
