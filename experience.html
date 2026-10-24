@@ -62,6 +62,18 @@ body{background:radial-gradient(ellipse 70% 420px at 78% 2%,rgba(178,201,151,.04
 .lower{background:rgba(178,201,151,.018)}.link{transition:color .2s,border-color .2s}.link:hover{border-color:var(--ink)}
 @media(max-width:850px){.intro{padding-top:75px;padding-bottom:60px}.panel{padding-top:50px;padding-bottom:80px}.panel-side{padding-top:18px}}
 @media(max-width:600px){.intro{padding-top:59px;padding-bottom:46px}.timeline-shell{padding-top:22px;padding-bottom:24px}.stop{flex-basis:155px}.panel{min-height:0;padding-top:44px;padding-bottom:70px}.panel-body h2{font-size:clamp(39px,10vw,54px)}.detail{grid-template-columns:1fr;gap:9px}.story{font-size:18px}}
+
+/* Final detail and footer spacing refinements */
+.tech-details summary:focus-visible{outline:1px solid var(--green);outline-offset:5px;border-radius:2px}
+.tech-details summary:focus:not(:focus-visible){outline:none}
+.panel{padding-bottom:66px;min-height:0}
+.lower{padding:54px max(50px,calc((100vw - 1130px)/2)) 64px;align-items:start;column-gap:9%}
+.lower>.wrap{min-width:0}
+.lower h3{margin-top:10px;margin-bottom:10px}
+.lower p{margin-top:0;margin-bottom:12px;line-height:1.7}
+.lower .link{margin-top:13px}
+@media(max-width:850px){.lower{padding:48px 50px 58px}.panel{padding-bottom:58px}}
+@media(max-width:600px){.lower{padding:42px 23px 52px;row-gap:38px}.panel{padding-bottom:50px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
 </style></head><body>
 <header><div class="wrap header-inner"><a class="brand" href="index.html">denis<span>.zone</span></a><nav class="nav" aria-label="Main navigation"><a href="index.html">home</a><a href="index.html#work">work</a><a class="active" href="experience.html" aria-current="page">experience</a><a href="index.html#contact">contact ↗</a></nav></div></header>
