@@ -76,6 +76,17 @@ main#main-content{position:relative;isolation:isolate}
 @media(max-width:980px){.hero{grid-template-columns:minmax(0,1fr);gap:35px}.terminal{max-width:680px}.hero-atmosphere{opacity:.42}.code-feed{left:33%;width:67%}}
 @media(max-width:600px){.hero{gap:28px}.terminal{box-shadow:5px 6px 0 #222b25;font-size:12px;min-height:0}.terminal-inner{padding:18px 16px}.terminal-bar{padding:10px 15px}.terminal-hint{line-height:2}.terminal-hint button{margin:3px 2px}.hero-atmosphere{opacity:.24}.code-feed{left:10%;width:90%;font-size:10px}}
 @media(prefers-reduced-motion:reduce){.code-feed-content{animation:none!important}}
+
+/* Keep the ambient logs separate from both readable foreground regions. */
+.hero-atmosphere{height:700px;opacity:1;mask-image:linear-gradient(to bottom,transparent 0%,#000 12%,#000 82%,transparent 100%)}
+.hero-atmosphere:after{background:linear-gradient(90deg,var(--bg) 0%,var(--bg) 42%,rgba(23,26,25,.8) 49%,transparent 63%)}
+.code-feed{left:52%;width:46%;top:20px;opacity:.65;font-size:11px;line-height:2.05}
+.hero>.terminal{position:relative;z-index:2;background:#0f1511;box-shadow:11px 11px 0 #222b25;border:1px solid #5a735e}
+.hero .terminal-bar{background:#151b17}
+.hero .terminal-inner{background:#0f1511}
+.hero>div:first-child{position:relative;z-index:2}
+@media(max-width:980px){.hero-atmosphere{height:790px;opacity:.37}.hero-atmosphere:after{background:linear-gradient(90deg,var(--bg),rgba(23,26,25,.84) 55%,rgba(23,26,25,.2))}.code-feed{left:45%;width:53%}}
+@media(max-width:600px){.hero-atmosphere{display:none}.terminal{background:#0f1511}}
 </style></head><body id="top"><a class="skip-link" href="#main-content">Skip to content</a><header class="header"><div class="wrap head-inner"><a href="#top" class="brand">denis<span class="end">.zone</span></a><nav aria-label="Main navigation"><a href="#work"><svg class="ui-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h18v13H3zM8 7V4h8v3"/></svg>work</a><a href="experience.html"><svg class="ui-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16M6 16V8m6 8V4m6 12v-6"/></svg>experience</a><a href="#about"><svg class="ui-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.5 3-7 8-7s8 2.5 8 7"/></svg>about</a><a href="#contact"><svg class="ui-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>contact ↗</a></nav></div></header><main id="main-content"><div class="hero-atmosphere" aria-hidden="true"><div class="code-feed"><div class="code-feed-content"><span class="command-line">[17:41:02] denis@zone:~$ docker compose ps</span>
 <span class="output-line">[17:41:03] remote: Resolving deltas... done</span>
 <span class="success-line">[17:41:04] ✓ deploy completed  /  production</span>
