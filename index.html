@@ -469,7 +469,7 @@ function miniTick(){
  const remaining=Math.max(0,Math.ceil((miniDeadline-performance.now())/1000));
  miniTime.textContent=Math.floor(remaining/60)+':'+String(remaining%60).padStart(2,'0');
  document.getElementById('word-mini').classList.toggle('time-low',remaining<=10);
- if(remaining===0){miniEnded=true;clearInterval(miniTimerId);miniSubmitButton.disabled=true;miniFeedback.textContent='Time! '+miniScore+' valid '+(miniScore===1?'word':'words')+' in 60 seconds. Start a new round to play again.'}
+ if(remaining===0){miniEnded=true;clearInterval(miniTimerId);miniSubmitButton.disabled=true;miniFeedback.textContent='Time! '+miniScore+' valid '+(miniScore===1?'word':'words')+' before the timer ran out. Start a new round to play again.'}
 }
 function miniRefreshHistory(){miniHistory.textContent=[...miniUsed].join(' → ')}
 
@@ -481,7 +481,7 @@ for(const letter of 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'){const b=document.createElement
 function miniNewRound(){
  clearInterval(miniTimerId);miniCurrent=miniStarts[miniIndex++%miniStarts.length];miniDraft=miniCurrent;miniSelected=0;miniUsed=new Set([miniCurrent]);miniScore=0;miniEnded=false;miniDeadline=performance.now()+60000;
  miniStreak.textContent='STREAK 0';miniLast.textContent='—';miniSubmitButton.disabled=false;
- miniFeedback.textContent='Change one letter at a time. You have 60 seconds.';miniPaint();miniRefreshHistory();miniShowMeaning(miniCurrent);miniTick();miniTimerId=setInterval(miniTick,200);
+ miniFeedback.textContent='Change one letter at a time. Every valid word resets the 60-second clock.';miniPaint();miniRefreshHistory();miniShowMeaning(miniCurrent);miniTick();miniTimerId=setInterval(miniTick,200);
 }
 function miniSubmit(){
  if(miniEnded)return;
@@ -491,9 +491,9 @@ function miniSubmit(){
  if(!miniWords.has(candidate)){miniFeedback.textContent='Not in the Word Duel four-letter dictionary. Try another.';return}
  if(miniUsed.has(candidate)){miniFeedback.textContent='Already used this round.';return}
  miniLast.textContent=miniCurrent;miniCurrent=candidate;miniDraft=candidate;miniUsed.add(candidate);miniScore++;
- miniStreak.textContent='STREAK '+miniScore;miniPaint();miniRefreshHistory();miniShowMeaning(candidate);
+ miniStreak.textContent='STREAK '+miniScore;miniDeadline=performance.now()+60000;miniTick();miniPaint();miniRefreshHistory();miniShowMeaning(candidate);
  const remaining=[...miniWords].some(w=>!miniUsed.has(w)&&[...w].filter((c,i)=>c!==miniCurrent[i]).length===1);
- miniFeedback.textContent=remaining?'Valid word! Keep going.':'Valid word! No unused moves left.';
+ miniFeedback.textContent=remaining?'Valid word! Timer reset to 60 seconds.':'Valid word! No unused moves left.';
 }
 miniTileBox.addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();miniSelected=Math.max(0,Math.min(3,miniSelected+(e.key==='ArrowRight'?1:-1)));miniPaint();miniTiles[miniSelected].focus()}else if(/^[a-z]$/i.test(e.key)){e.preventDefault();miniSetLetter(e.key.toUpperCase())}else if(e.key==='Enter'){e.preventDefault();miniSubmit()}});
 document.getElementById('word-mini-submit').addEventListener('click',miniSubmit);document.getElementById('word-mini-reset').addEventListener('click',miniNewRound);miniNewRound();
