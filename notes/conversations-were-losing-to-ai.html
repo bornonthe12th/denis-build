@@ -31,6 +31,9 @@ footer{border-top:1px solid var(--line);padding:30px 0;color:#8d938a}
 .note-pager span{display:block;margin-bottom:10px;font:12px "Geist Mono",ui-monospace,monospace;color:var(--green);letter-spacing:.13em;text-transform:uppercase}
 .note-pager a{font-size:20px;line-height:1.35;font-weight:550;transition:color .18s ease}
 .note-pager .next{text-align:right}
+.note-pager span{transition:transform .18s}
+.note-pager .prev:hover span,.note-pager .prev:focus-visible span{transform:translateX(-3px)}
+.note-pager .next:hover span,.note-pager .next:focus-visible span{transform:translateX(3px)}
 .ui-icon{display:inline-block;vertical-align:-.17em;flex:none;color:var(--green,#a6bd84)}
 nav a .ui-icon{opacity:.85;margin-right:6px}
 .article-actions button .ui-icon{margin-right:6px}
@@ -78,6 +81,8 @@ nav a .ui-icon{opacity:.85;margin-right:6px}
   .article h2{font-size:23px}
 }
 @media (prefers-reduced-motion:reduce){
+  .note-pager span{transition:none}
+  .note-pager a:hover span,.note-pager a:focus-visible span{transform:none}
   .site-header{transition:none}
   html{scroll-behavior:auto}
   .note-pager a,.site-nav a{transition:none}
