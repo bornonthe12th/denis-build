@@ -437,18 +437,32 @@ const miniDefinitionCache=new Map(Object.entries(miniDefinitions));
 async function miniShowMeaning(word){
  miniCurrentLabel.textContent=word;
  const request=++miniDefinitionRequest;
- miniMeaning.textContent=miniDefinitionCache.get(word)||'Looking up meaning…';
- if(miniDefinitionCache.has(word))return;
+ const saved=miniDefinitionCache.get(word);
+ if(saved){miniMeaning.textContent=saved;return}
+ miniMeaning.textContent='Finding the meaning…';
+ const clean=word.toLowerCase();
+ let definition='';
  try{
-  const response=await fetch('https://api.dictionaryapi.dev/api/v2/entries/en/'+encodeURIComponent(word.toLowerCase()));
-  if(!response.ok)throw Error('No entry');
-  const entries=await response.json();
-  const meanings=entries?.[0]?.meanings||[];
-  const definition=meanings.flatMap(item=>item.definitions||[]).map(item=>item.definition).find(Boolean);
-  if(!definition)throw Error('No definition');
-  miniDefinitionCache.set(word,definition);
-  if(request===miniDefinitionRequest)miniMeaning.textContent=definition;
- }catch(err){if(request===miniDefinitionRequest)miniMeaning.textContent='Meaning unavailable right now.'}
+  const response=await fetch('https://api.dictionaryapi.dev/api/v2/entries/en/'+encodeURIComponent(clean));
+  if(response.ok){
+   const entries=await response.json();
+   definition=(entries?.[0]?.meanings||[]).flatMap(item=>item.definitions||[]).map(item=>item.definition).find(Boolean)||'';
+  }
+ }catch(error){}
+ if(!definition){
+  try{
+   const response=await fetch('https://api.datamuse.com/words?sp='+encodeURIComponent(clean)+'&md=d&max=8');
+   if(response.ok){
+    const entries=await response.json();
+    const exact=entries.find(item=>item.word?.toLowerCase()===clean);
+    const raw=exact?.defs?.[0]||'';
+    definition=raw.includes('\t')?raw.slice(raw.indexOf('\t')+1).trim():raw.trim();
+   }
+  }catch(error){}
+ }
+ if(request!==miniDefinitionRequest)return;
+ if(definition){miniDefinitionCache.set(word,definition);miniMeaning.textContent=definition}
+ else{miniMeaning.textContent='No definition found for '+word+'. You can still use it in the game.'}
 }
 function miniTick(){
  if(miniEnded)return;
