@@ -8,7 +8,7 @@ A static site with no build step. Each page is a single HTML file with its own i
 
 | File | Page |
 | --- | --- |
-| `index.html` | Homepage: hero terminal, selected work (Word Chain demo, timer game), notes list, personal section, contact |
+| `index.html` | Homepage: hero terminal, selected work (Word Duel demo, timer game), notes list, personal section, contact |
 | `experience.html` | Career timeline |
 | `about.html` | The non-technical side, with photos |
 | `notes/*.html` | Articles, one file per note |
