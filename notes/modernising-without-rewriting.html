@@ -5,7 +5,7 @@ body{margin:0;color:var(--ink);font:16px/1.8 -apple-system,BlinkMacSystemFont,"S
 a{color:inherit;text-decoration:none}
 a:hover{color:var(--green)}
 a:focus-visible{outline:2px solid var(--green);outline-offset:4px}
-.wrap{max-width:1090px;margin:auto;padding:0 48px}
+.wrap{max-width:1190px;margin:auto;padding-left:48px;padding-right:48px}
 main{margin:auto;max-width:800px;padding:100px 48px 110px}
 .kicker{font:12px ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--green)}
 .meta{font:12px ui-monospace,SFMono-Regular,Menlo,monospace;border-bottom:1px solid var(--line);padding-bottom:29px;margin-bottom:45px;color:#aebcac}
@@ -46,6 +46,8 @@ nav a .ui-icon{opacity:.85;margin-right:6px}
 .note-back:hover,.site-footer a:hover{color:#b0c69a}
 .note-back{display:block;width:max-content;margin-bottom:28px;font:12px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#afb5ab;text-decoration:none}
 @media (max-width:767px){
+  .wrap{padding-left:20px;padding-right:20px}
+  main{padding-left:20px;padding-right:20px}
   .site-bar{flex-direction:column;align-items:flex-start;gap:10px;min-height:0;padding-top:12px;padding-bottom:12px}
   .site-brand{font-size:21px}
   .site-nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;width:100%}
@@ -56,8 +58,8 @@ nav a .ui-icon{opacity:.85;margin-right:6px}
   .site-footer{padding:24px 0 32px}
 }
 @media (max-width:600px){
-  .wrap{padding-left:24px;padding-right:24px}
-  main{padding:67px 24px 80px}
+  .wrap{padding-left:20px;padding-right:20px}
+  main{padding:67px 20px 80px}
   .sub{font-size:18px}
   nav a .ui-icon{margin-right:4px;width:13px;height:13px}
   h1{font-size:clamp(40px,10vw,58px)}
