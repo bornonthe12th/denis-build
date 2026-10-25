@@ -15,6 +15,7 @@ A static site with no build step. Each page is a single HTML file with its own i
 | `assets/photos/` | Photos used on the About page |
 | `assets/og-*.svg` / `.png` | Link preview images (the PNGs are generated, see below) |
 | `favicon.svg`, `favicon-32.png`, `apple-touch-icon.png` | Site icons |
+| `assets/fonts/` | Geist and Geist Mono (variable woff2, SIL Open Font License in `OFL.txt`) |
 | `sitemap.xml`, `robots.txt` | For search engines |
 
 ## Preview locally
@@ -43,6 +44,7 @@ A new page needs its own SVG, plus `og:image` and `twitter:*` meta tags pointing
 - **One rule per selector per breakpoint.** Each page's CSS has base rules first, then one `@media` block per breakpoint (widest first), then `prefers-reduced-motion`. Add to the existing block rather than appending new override layers at the end.
 - **Containers.** `.wrap` is 1190px wide with 48px side padding, and 20px on screens up to 767px. It sets side padding only, so sections that share the class can set their own top and bottom padding.
 - **Breakpoints.** The main layout switch is at 767px/768px. The homepage also has smaller tweaks at 980, 900, 800, 600, 550, 410 and 380px.
+- **Fonts.** Geist for text and headings, Geist Mono for labels, nav and code-style text. Each page declares both `@font-face` rules and preloads the files. Keep the system fonts after them in each font list as a fallback.
 - **Colours.** Dark background `#171a19`, text `#edece4`, green accent `#b0c69a`, orange accent `#dda980`, lines `#363e38`.
 
 ## Adding a note
