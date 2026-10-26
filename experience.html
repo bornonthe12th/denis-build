@@ -203,7 +203,7 @@ const items=[
 ];
 let active=items.length-1;
 const rail=document.getElementById('rail'),panel=document.querySelector('.panel-body');
-const chapters=[{until:1,name:"The foundations",years:"2009–2013"},{until:6,name:"Building products",years:"2013–2019"},{until:9,name:"Engineering at scale",years:"2019–2023"},{until:Infinity,name:"Designing systems",years:"2023–NOW"}];
+const chapters=[{until:1,name:"The foundations",years:"2009–2013"},{until:6,name:"Building products",years:"2013–2019"},{until:10,name:"Engineering at scale",years:"2019–2024"},{until:Infinity,name:"Designing systems",years:"2024–NOW"}];
 const slugs=items.map(d=>d.company.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,''));
 const indexForHash=()=>slugs.indexOf(decodeURIComponent(location.hash.slice(1)).toLowerCase());
 const reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
