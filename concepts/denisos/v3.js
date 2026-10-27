@@ -59,22 +59,30 @@ $('.skip-link').addEventListener('click', e => { e.preventDefault(); unlock(); }
 let z = 100, opened = 0;
 const setRunning = (app, on) => $$(`.app-icon[data-open="${app}"]`).forEach(b => b.classList.toggle('running', on));
 const front = w => { $$('.window.front').forEach(x => x.classList.remove('front')); w.classList.add('front'); w.style.zIndex = ++z; };
+const clamp = w => {
+  if (phone() || w.hidden) return;
+  const W = w.offsetWidth, H = w.offsetHeight;
+  w.style.left = Math.max(8, Math.min(innerWidth - W - 8, w.offsetLeft)) + 'px';
+  w.style.top = Math.max(38, Math.min(innerHeight - H - 8, w.offsetTop)) + 'px';
+};
 const open = app => {
   const w = $('#win-' + app); if (!w) return;
+  $$('.window:not([hidden])').forEach(o => { if (o !== w) o.hidden = true; });
   if (w.hidden) {
     w.hidden = false;
     if (!w.dataset.placed && !phone()) {
-      const W = w.offsetWidth, H = w.offsetHeight, n = opened++ % 6;
-      w.style.left = Math.max(12, Math.min(innerWidth - W - 12, innerWidth / 2 - W / 2 + (n - 2) * 34)) + 'px';
-      w.style.top = Math.max(42, Math.min(innerHeight - H - 96, 70 + n * 26)) + 'px';
+      const W = w.offsetWidth, H = w.offsetHeight;
+      w.style.left = (innerWidth - W) / 2 + 'px';
+      w.style.top = Math.max(42, (innerHeight - H - 96) / 2 + 20) + 'px';
       w.dataset.placed = '1';
     }
-    w.dataset.opener = document.activeElement?.dataset?.open ? app : '';
+    clamp(w);
   }
   front(w); setRunning(app, true);
   (w.querySelector('#term-in') || w.querySelector('.light.close') || w).focus({preventScroll: true});
   if (phone()) document.body.style.overflow = 'hidden';
 };
+addEventListener('resize', () => $$('.window').forEach(clamp));
 const close = (w, keepRunning) => {
   w.hidden = true; if (!keepRunning) setRunning(w.dataset.app, false);
   if (phone()) document.body.style.overflow = '';
@@ -94,8 +102,7 @@ $$('.window').forEach(w => {
   });
   bar.addEventListener('pointermove', e => {
     if (!drag) return;
-    w.style.left = Math.max(-w.offsetWidth + 120, Math.min(innerWidth - 120, e.clientX - drag.x)) + 'px';
-    w.style.top = Math.max(30, Math.min(innerHeight - 60, e.clientY - drag.y)) + 'px';
+    w.style.left = (e.clientX - drag.x) + 'px'; w.style.top = (e.clientY - drag.y) + 'px'; clamp(w);
   });
   bar.addEventListener('pointerup', () => { drag = null; });
 });
