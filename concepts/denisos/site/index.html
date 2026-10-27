@@ -1,0 +1,602 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DenisOS — Denis Martins</title><meta name="description" content="Denis Martins, senior software engineer, as an operating system. Unlock it and open the apps.">
+<meta name="robots" content="noindex"><meta name="theme-color" content="#0b0f14">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preload" href="/assets/fonts/story/DMSans-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<style>@font-face{font-family:'DM Sans';font-weight:400 700;font-display:swap;src:url(/assets/fonts/story/DMSans-400-normal.woff2) format('woff2')}
+@font-face{font-family:'DM Mono';font-weight:400;font-display:swap;src:url(/assets/fonts/story/DMMono-400-normal.woff2) format('woff2')}
+@font-face{font-family:'DM Mono';font-weight:500;font-display:swap;src:url(/assets/fonts/story/DMMono-500-normal.woff2) format('woff2')}
+@font-face{font-family:'Fraunces';font-weight:600 700;font-display:swap;src:url(/assets/fonts/story/Fraunces-600-normal.woff2) format('woff2')}
+:root{--ink:#202b30;--paper:#f6f0e4;--white:#fffaf0;--orange:#f36e45;--orange-ink:#b8401c;--lime:#d6e976;--muted:#5a6468;--blue:#b7d9e5;--glass:rgba(255,255,255,.16);--mono:"DM Mono",ui-monospace,Menlo,monospace}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font:15px/1.55 "DM Sans",system-ui,sans-serif;color:var(--ink);background:#0b0f14;overflow:hidden}
+button{font:inherit;color:inherit}
+a{color:inherit}
+.skip-link{position:absolute;left:12px;top:-100px;z-index:100;background:var(--white);color:var(--ink);padding:10px 14px;font-weight:700;text-decoration:none}
+.skip-link:focus{top:12px;outline:3px solid var(--orange)}
+.kicker{font:500 11px var(--mono);letter-spacing:.14em;margin:0 0 8px}
+.muted{color:var(--muted)}
+
+/* boot */
+.boot{position:fixed;inset:0;z-index:60;background:#050608;color:#cfd6c7;display:grid;place-items:center;padding:24px;transition:opacity .45s}
+.boot pre{font:14px/1.9 var(--mono);margin:0;min-width:min(560px,90vw);white-space:pre-wrap}
+.boot pre b{color:#fff;font-weight:500}.boot pre i{color:var(--lime);font-style:normal}
+.boot-hint{position:absolute;bottom:28px;left:0;right:0;text-align:center;font:12px var(--mono);color:#7d867c}
+.boot.gone{opacity:0;pointer-events:none}
+
+/* lock */
+.lock{position:fixed;inset:0;z-index:50;color:#fff;display:flex;flex-direction:column;align-items:center;padding:8vh 20px 4vh;transition:transform .6s cubic-bezier(.7,0,.2,1),opacity .6s}
+.lock-bg{position:absolute;inset:0;z-index:-1;background:linear-gradient(rgba(5,6,8,.35),rgba(5,6,8,.65)),url(/assets/photos/volcanic-rocks-800.webp) center 35%/cover;filter:grayscale(1)}
+.lock-clock{text-align:center}.lock-clock p{margin:0}
+#lock-date{font-size:20px;letter-spacing:.01em}
+.big{font:600 clamp(72px,11vw,128px)/1 "DM Sans",sans-serif;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.lock-notes{margin-top:auto;display:grid;gap:10px;width:min(380px,92vw)}
+.notif{display:flex;gap:12px;align-items:flex-start;background:rgba(40,44,48,.62);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-radius:18px;padding:12px 14px;font-size:14px;line-height:1.4}
+.notif b{font-weight:700}.notif p{margin:2px 0 0;color:#e8eae6}
+.n-now{float:right;color:#b9bdb8;font-size:12px}
+.n-icon{flex:none;width:36px;height:36px;border-radius:9px;display:grid;place-items:center;font:600 11px var(--mono);color:#fff}
+.notif>div{flex:1}
+.unlock{margin-top:4vh;background:none;border:0;color:#fff;font-size:14px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding:10px 18px}
+.unlock .chev{font-size:20px;animation:nudge 1.6s ease-in-out infinite}
+.unlock:focus-visible{outline:2px solid #fff;outline-offset:4px;border-radius:8px}
+@keyframes nudge{50%{transform:translateY(-6px)}}
+.lock.gone{transform:translateY(-100%);opacity:0;pointer-events:none}
+
+/* desktop */
+.desktop{position:fixed;inset:0;background:linear-gradient(165deg,#16212d 0%,#2c4560 42%,#a8644a 82%,#e9a066 100%);color:#fff;outline:none}
+.menubar{position:absolute;top:0;left:0;right:0;height:30px;display:flex;align-items:center;gap:16px;padding:0 14px;font-size:13px;background:rgba(10,14,20,.38);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);z-index:30}
+.menubar .logo{font:700 11px var(--mono);background:var(--white);color:var(--ink);border-radius:5px;padding:2px 5px}
+.menus{display:flex;gap:2px}.menus button{background:none;border:0;padding:3px 9px;border-radius:5px;cursor:pointer}
+.menus button:hover,.menus button:focus-visible{background:rgba(255,255,255,.18);outline:none}
+.status{margin-left:auto;display:flex;gap:16px;font-variant-numeric:tabular-nums}.status .real{text-decoration:none;opacity:.85}.status .real:hover{opacity:1;text-decoration:underline}
+.desk-hello{position:absolute;left:7vw;top:16vh;max-width:540px}
+.desk-hello h1{font:700 clamp(44px,5.4vw,76px)/1.02 Fraunces,serif;letter-spacing:-.05em;margin:0 0 16px}
+.desk-hello p{font-size:18px;color:#f1ece4;margin:0}
+.dock{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);display:flex;gap:6px;padding:8px 10px;background:var(--glass);border:1px solid rgba(255,255,255,.22);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-radius:22px;z-index:30}
+.app-icon{position:relative;background:none;border:0;padding:0;cursor:pointer;display:flex;flex-direction:column;align-items:center}
+.glyph{width:54px;height:54px;border-radius:14px;display:grid;place-items:center;color:#fff;font:600 15px var(--mono);box-shadow:0 6px 16px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.25);transition:transform .18s}
+.dock .app-label{position:absolute;bottom:72px;background:rgba(20,24,28,.85);color:#fff;font-size:12px;padding:4px 9px;border-radius:7px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s}
+.dock .app-icon:hover .glyph,.dock .app-icon:focus-visible .glyph{transform:translateY(-8px) scale(1.12)}
+.dock .app-icon:hover .app-label,.dock .app-icon:focus-visible .app-label{opacity:1}
+.app-icon:focus-visible{outline:none}.app-icon:focus-visible .glyph{outline:3px solid #fff;outline-offset:3px}
+.run-dot{position:absolute;bottom:-6px;width:4px;height:4px;border-radius:50%;background:#fff;opacity:0}
+.app-icon.running .run-dot{opacity:.9}
+.home-grid{display:none}
+
+/* windows */
+.window{position:absolute;left:120px;top:60px;width:min(var(--w),94vw);height:min(var(--h),calc(100vh - 150px));display:flex;flex-direction:column;background:var(--white);color:var(--ink);border-radius:12px;box-shadow:0 30px 80px rgba(0,0,0,.45),0 0 0 1px rgba(0,0,0,.25);overflow:hidden;z-index:10;animation:pop .18s ease-out}
+.window[hidden]{display:none}
+@keyframes pop{from{transform:scale(.96);opacity:0}}
+.titlebar{flex:none;height:38px;display:flex;align-items:center;gap:10px;padding:0 12px;background:#ece5d8;border-bottom:1px solid #d6cdbd;cursor:grab;user-select:none;-webkit-user-select:none;touch-action:none}
+.titlebar:active{cursor:grabbing}
+.lights{display:flex;gap:7px}.light{width:13px;height:13px;border-radius:50%;border:0;padding:0;cursor:pointer}
+.close{background:#ff5f57}.min{background:#febc2e}.zoom{background:#28c840;cursor:default}
+.light:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.wtitle{flex:1;text-align:center;font-size:13px;font-weight:700;margin-right:52px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.back{display:none}
+.wbody{flex:1;overflow:auto;padding:24px 26px 30px;overscroll-behavior:contain}
+.window.dark .titlebar{background:#2a3439;border-color:#151b1f;color:#e6eadf}
+.window.dark .wbody{background:#1b2329;color:#e6eadf}
+.window.dark .muted{color:#b8c3bd}
+.window:focus{outline:none}
+.window.front{box-shadow:0 34px 90px rgba(0,0,0,.55),0 0 0 1px rgba(0,0,0,.3)}
+
+/* about */
+.about-head{display:grid;grid-template-columns:150px 1fr;gap:22px;align-items:center}
+.about-head img{width:150px;height:190px;object-fit:cover;border-radius:10px}
+.about-head h2{font:700 34px/1.05 Fraunces,serif;letter-spacing:-.04em;margin:0 0 10px}
+.spec{display:grid;grid-template-columns:96px 1fr;margin:0;border-top:1px solid #d6cdbd}
+.spec dt,.spec dd{margin:0;padding:6px 0;border-bottom:1px solid #e3dccf;font-size:14px}.spec dt{font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding-top:9px}
+.lead{font:600 19px/1.4 Fraunces,serif;margin:22px 0}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.tiles figure{margin:0}.tiles img{width:100%;aspect-ratio:4/5;height:auto;object-fit:cover;object-position:center top;border-radius:10px}
+.tiles figcaption{font-size:14px;margin-top:6px}
+
+/* journey */
+.journey h3{display:flex;gap:12px;align-items:baseline;font:700 22px Fraunces,serif;letter-spacing:-.03em;margin:22px 0 8px}
+.journey h3 span{font:500 12px var(--mono);color:var(--orange-ink)}
+.journey ol{list-style:none;margin:0;padding:0;border-left:2px solid var(--ink);margin-left:6px}
+.journey li{display:grid;grid-template-columns:150px 1fr;gap:14px;padding:10px 0 10px 18px;position:relative}
+.journey li::before{content:"";position:absolute;left:-6px;top:16px;width:10px;height:10px;border-radius:50%;background:var(--white);border:2px solid var(--ink)}
+.j-when{font:12px var(--mono);color:var(--muted);padding-top:3px}
+.journey strong{display:block;font-size:16px}.j-role{display:block;font-size:13px;color:var(--muted)}
+.journey p{margin:4px 0 0}
+.j-next li::before{background:var(--lime)}
+
+/* work */
+.work h2{font:700 28px/1.1 Fraunces,serif;letter-spacing:-.04em;margin:0 0 8px}.work h2.mt{margin-top:36px}
+.case{border:1px solid #d6cdbd;border-radius:12px;padding:20px;margin:16px 0;background:#fff}
+.case-head .mono{font:500 11px var(--mono);letter-spacing:.08em;color:var(--muted)}
+.case h3{font:700 22px/1.15 Fraunces,serif;letter-spacing:-.03em;margin:6px 0}.case h3 em{color:var(--orange-ink)}
+.case-tags{display:block;font:11px var(--mono)!important;color:var(--muted)}
+.case dl{display:grid;grid-template-columns:1fr 1fr;gap:12px 20px;margin:14px 0 0}
+.case dt{font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--orange-ink)}.case dd{margin:2px 0 0;font-size:14px}
+.cards.principles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:14px}
+.principles .card{border:1px solid #d6cdbd;border-radius:12px;padding:16px;background:#fff}
+.principles .mono{font:500 12px var(--mono)}.principles h3{font:700 19px Fraunces,serif;margin:6px 0}.principles p{margin:0;font-size:14px}
+.diagram-figure{margin:14px 0 0;background:var(--ink);border-radius:12px;padding:18px}
+.diagram-figure figcaption{font:11px var(--mono);color:#cfd6c7;letter-spacing:.08em}
+.sys-diagram{display:block;width:100%;height:auto;margin:10px 0}.sys-tall{display:none}
+.runs-on{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px}.runs-on li{padding:4px 9px;border:1px solid #5d6b62;color:#e6eadf;font:11px var(--mono)}
+
+/* terminal */
+.window.dark .wbody:has(.term){background:#0f1418;padding:16px 18px}
+.term{font:14px/1.7 var(--mono);color:#d7e2d0;min-height:100%}
+.term-log{white-space:pre-wrap;overflow-wrap:anywhere}
+.term .p{color:var(--lime)}.term .d{color:#8fc3e6}.term b{color:#fff;font-weight:500}.term a{color:var(--lime)}
+#term-form{display:flex;gap:8px;align-items:center}
+#term-form input{flex:1;min-width:0;background:none;border:0;color:#fff;font:inherit;caret-color:var(--orange);padding:0}
+#term-form input:focus{outline:none}
+
+/* simulator */
+.simwrap .run{font:700 13px "DM Sans",sans-serif;letter-spacing:.04em;padding:11px 16px;border:2px solid var(--lime);background:var(--lime);color:var(--ink);cursor:pointer;margin:2px 0 14px}
+.simwrap .run:disabled{opacity:.6;cursor:progress}
+.simwrap .pipeline{border:1px solid #3a474d;border-radius:10px;padding:16px;background:#22313a}
+
+/* notes */
+.window .wbody:has(.notesapp){padding:0}
+.notesapp{display:grid;grid-template-columns:230px 1fr;height:100%}
+.n-list{border-right:1px solid #e3dccf;background:#f3ecdf;padding:10px;display:flex;flex-direction:column;gap:4px;overflow:auto}
+.n-item{text-align:left;background:none;border:0;border-radius:8px;padding:10px;cursor:pointer}
+.n-item strong{display:block;font-size:14px;line-height:1.3}.n-item span{font-size:12px;color:var(--muted)}
+.n-item[aria-pressed=true]{background:#f2c94c}.n-item[aria-pressed=true] span{color:var(--ink)}
+.n-item:focus-visible{outline:2px solid var(--ink)}
+.n-view{overflow:auto;padding:24px 30px}
+.n-body h2{font:700 28px/1.1 Fraunces,serif;letter-spacing:-.04em;margin:4px 0 6px}
+.n-date{font:12px var(--mono);color:var(--muted);margin:0}.n-sub{color:var(--muted);margin-top:0}
+.n-body h2+.n-sub{font-size:16px}
+.n-body p,.n-body li{font-size:16px;line-height:1.7}
+.n-body .takeaway{font:700 20px/1.35 Fraunces,serif;border-left:5px solid var(--orange);padding-left:16px}
+.n-body a{color:var(--orange-ink)}
+
+/* games, mail */
+.gamewrap .classic-game{margin:10px 0 14px}
+.ext{display:inline-block;font-weight:700;text-underline-offset:4px}
+.m-head{border-bottom:1px solid #e3dccf;padding:8px 0;font-size:14px}.m-head span{color:var(--muted);display:inline-block;width:70px}
+.m-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+.btn{display:inline-block;text-decoration:none;font-weight:700;padding:10px 16px;border-radius:9px;background:var(--ink);color:var(--white)}
+.btn.ghost{background:none;color:var(--ink);border:1.5px solid var(--ink)}
+.btn:focus-visible,.ext:focus-visible{outline:3px solid var(--orange);outline-offset:2px}
+
+/* phone: a home screen, apps open full screen */
+@media (max-width:760px){
+  body{overflow:auto}
+  .desktop{overflow:auto;padding:44px 18px 40px}
+  .menubar{position:fixed}.menus{display:none}
+  .desk-hello{position:static;margin:16px 4px 26px}
+  .desk-hello h1{font-size:40px}.desk-hello p{font-size:16px}
+  .dock{display:none}
+  .home-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px 8px}
+  .home-grid .app-label{font-size:12px;margin-top:6px;color:#fff;text-align:center}
+  .home-grid .glyph{width:60px;height:60px;border-radius:16px}
+  .window{position:fixed;left:0!important;top:0!important;width:100vw;height:100dvh;border-radius:0;animation:slide .22s ease-out}
+  @keyframes slide{from{transform:translateY(24px);opacity:0}}
+  .titlebar{cursor:default;padding:0 8px;height:46px}
+  .lights{display:none}.back{order:-1;display:inline-flex;background:none;border:0;font-weight:700;font-size:15px;color:#1d55a8;cursor:pointer;padding:8px}
+  .window.dark .back{color:var(--lime)}
+  .wtitle{margin-right:70px;text-align:center}
+  .about-head{grid-template-columns:96px 1fr}.about-head img{width:96px;height:124px}
+  .spec{grid-template-columns:80px 1fr}
+  .journey li{grid-template-columns:1fr;gap:2px}
+  .case dl{grid-template-columns:1fr}
+  .notesapp{grid-template-columns:1fr;grid-template-rows:auto 1fr}.n-list{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid #e3dccf}.n-item{min-width:200px}
+  .sys-wide{display:none}.sys-tall{display:block;max-width:360px;margin:10px auto}
+}
+@media (min-width:761px){.menubar,.dock{z-index:5000}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.pipeline{border:2px solid #e9e4d3;padding:20px;background:#314149;box-shadow:9px 9px 0 #f36e45}
+.request{display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:1px solid #d7e97670;padding-bottom:17px;margin-bottom:18px}
+.request code{font:12px "DM Mono",monospace;color:var(--lime)}
+.response{font:12px/1.7 "DM Mono",monospace;min-height:80px;color:var(--lime);margin-top:20px;white-space:pre-wrap}
+.req-headers{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:11px;color:#cad9c4;margin:-6px 0 14px}
+.req-headers b{color:var(--lime);font-weight:500}
+.chaos{border:1px dashed #a3b0aa66;padding:12px 12px 8px;margin:0 0 14px;display:flex;flex-wrap:wrap;gap:8px}
+.chaos legend{font-size:11px;color:#cad9c4;padding:0 6px}
+.chaos-btn{font:600 13px "DM Sans",sans-serif;color:var(--white);background:transparent;border:1px solid #e9e4d38c;padding:7px 11px;cursor:pointer}
+.chaos-btn[aria-pressed=true]{background:var(--orange);border-color:var(--orange);color:var(--ink)}
+.chaos-btn[aria-pressed=true]::before{content:"⚡ "}
+.chaos-btn:focus-visible,.run:focus-visible{outline:2px solid var(--lime);outline-offset:3px}
+.lessons{list-style:none;padding:0;margin:12px 0 0;font-size:14px;line-height:1.5;color:#e5e3d7}
+.lessons li{padding:7px 0;border-top:1px solid #a3b0aa45}
+.lessons b{color:var(--lime)}
+.classic-game{--green:var(--lime);--text:#eef0e6;background:#22313a;color:#eef0e6;border:2px solid var(--ink);box-shadow:5px 5px 0 #202b3066;padding:16px;margin:4px 0 14px}
+.classic-game .los-try{border-top:0;padding-top:0}
+.classic-game button{color:inherit}
+.classic-game .timer-readout span{color:var(--green)}
+.classic-game .los-try{border-top:1px solid #303932;padding-top:14px;display:grid;gap:10px}
+.classic-game .los-try .timer-readout{font-size:clamp(28px,3.2vw,40px)}
+.classic-game .timer-readout{font:500 clamp(36px,5vw,61px) "DM Mono",ui-monospace,monospace;letter-spacing:-.07em;color:var(--text)}
+.classic-game .timer-track{height:3px;background:#303932}
+.classic-game .timer-track i{display:block;background:var(--green);height:100%;width:72%;transition:none}
+.classic-game .timer-actions{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.classic-game .timer-actions button{border:1px solid var(--green);background:#263126;color:var(--text);padding:7px 12px;font:11px "DM Mono",ui-monospace,monospace;cursor:pointer;transition:background .18s;font-size:12px}
+.classic-game .timer-actions button:hover{background:#344735}
+.classic-game .timer-feedback{color:#a2aa9d;font:11px/1.5 "DM Mono",ui-monospace,monospace;font-size:12px}
+.classic-game .word-feature-heading{display:flex;justify-content:space-between;color:var(--green);font:600 23px "DM Mono",ui-monospace,monospace;letter-spacing:-.04em;margin-bottom:13px}
+.classic-game .word-feature-heading span{font-size:18px}
+.classic-game .word-mini{display:flex;flex-direction:column;gap:13px}
+.classic-game .word-mini .word-feature-heading{margin-bottom:0}
+.classic-game .word-mini .word-feature-heading span{font:10px "DM Mono",ui-monospace,monospace;color:#93a98d;letter-spacing:.06em}
+.classic-game .word-mini-meta{display:flex;justify-content:space-between;gap:10px;color:#a7b4a2;font:10px "DM Mono",ui-monospace,monospace;font-size:12px}
+.classic-game .word-mini-alphabet{display:grid;grid-template-columns:repeat(13,minmax(0,1fr));gap:3px}
+.classic-game .word-mini-alphabet button{background:#253027;color:#d4dfcf;border:1px solid #465749;min-width:0;padding:6px 0;cursor:pointer;font:11px "DM Mono",ui-monospace,monospace}
+.classic-game .word-mini-alphabet button:hover{background:#374838;border-color:var(--green)}
+.classic-game .word-mini-tile.selected{outline:2px solid var(--green);outline-offset:2px;background:#344234}
+.classic-game .word-mini-tiles{display:flex;gap:8px;justify-content:center;padding:8px 0}
+.classic-game .word-mini-tile{width:min(23%,56px);height:60px;border:1px solid #60715c;background:#202820;color:#e7ece1;text-align:center;font:600 28px "DM Mono",ui-monospace,monospace;text-transform:uppercase;caret-color:var(--green);border-radius:0}
+.classic-game .word-mini-tile.changed{color:var(--green);border-color:var(--green)}
+.classic-game .word-mini-tile:focus{outline:2px solid var(--green);outline-offset:2px;background:#2a342a}
+.classic-game .word-mini-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.classic-game .word-mini-controls button{font:11px "DM Mono",ui-monospace,monospace;cursor:pointer;padding:9px 10px;border:1px solid #6c805e;color:var(--green);background:#283126;font-size:12px}
+.classic-game .word-mini-controls button+button{border-color:#465047;background:0 0;color:#bec8b7}
+.classic-game .word-mini-feedback{font:11px/1.5 "DM Mono",ui-monospace,monospace;color:#c1cebb;min-height:33px;font-size:12px}
+@media (max-width:600px){.classic-game .timer-actions{align-items:flex-start;flex-direction:column;gap:9px}.classic-game .timer-actions button,.classic-game .word-mini-alphabet button,.classic-game .word-mini-tile{min-height:40px}.classic-game .word-mini-tiles{flex-wrap:wrap}}
+@media (max-width:550px){.classic-game .word-mini-alphabet{grid-template-columns:repeat(9,minmax(0,1fr))}}
+@media (prefers-reduced-motion:reduce){.classic-game .timer-progress,.classic-game .word-mini-tile{transition:none!important}}
+.classic-game .word-mini-dashboard{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.classic-game .word-mini-clock,.classic-game .word-mini-last,.classic-game .word-mini-definition,.classic-game .word-mini-history{background:#162019;border:1px solid #425343;border-radius:3px;padding:11px 13px;min-width:0}
+.classic-game .word-mini-clock>span,.classic-game .word-mini-last>span,.classic-game .word-mini-definition>span,.classic-game .word-mini-history>span{display:block;color:#98ae93;letter-spacing:.1em;font:10px "DM Mono",ui-monospace,monospace;margin-bottom:5px}
+.classic-game .word-mini-clock strong,.classic-game .word-mini-last strong{font:600 21px "DM Mono",ui-monospace,monospace;color:#e6eede}
+.classic-game .word-mini.time-low .word-mini-clock strong{color:#e9b28d}
+.classic-game .word-mini-definition>div{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+.classic-game .word-mini-definition strong{font:650 17px "DM Mono",ui-monospace,monospace;color:#b8d5a9}
+.classic-game .word-mini-definition p{font-size:12px;line-height:1.55;color:#d0dacf;margin:0;flex:1 1 170px}
+.classic-game .word-mini-history>div{font:12px/1.65 "DM Mono",ui-monospace,monospace;color:#d4e3ce;overflow-wrap:anywhere}
+.classic-game #word-mini-submit:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:550px){.classic-game .word-mini-dashboard{gap:7px}.classic-game .word-mini-clock,.classic-game .word-mini-last,.classic-game .word-mini-definition,.classic-game .word-mini-history{padding:9px 10px}}
+.sim .chaos-btn{font-size:12px;padding:6px 9px}
+.seq{border-top:1px solid #d7e97670;padding-top:10px}
+.lanes,.row-track{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));position:relative}
+.lanes span{font:10px "DM Mono",monospace;color:#cad9c4;text-align:center;letter-spacing:.04em;padding-bottom:6px;border-bottom:1px solid #a3b0aa45;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.seq-rows{position:relative;min-height:140px;background:repeating-linear-gradient(90deg,transparent 0 calc(100%/12 - 1px),#a3b0aa2e calc(100%/12 - 1px) calc(100%/12),transparent calc(100%/12) calc(100%/6))}
+.seq-empty{font-size:12px;color:var(--lime);padding:14px 0;margin:0;background:#314149}
+.srow{padding:5px 0 4px;opacity:0;transform:translateY(4px);transition:opacity .25s,transform .25s}
+.srow.show{opacity:1;transform:none}
+.srow .lbl{display:flex;gap:7px;align-items:baseline;font:12px "DM Mono",monospace;color:#fff;padding:0 2px 3px;flex-wrap:wrap}
+.srow .lbl small{color:#cad9c4;font-size:11px}
+.badge{font-size:9px;letter-spacing:.08em;padding:1px 5px;color:var(--ink);font-weight:500}
+.k-cmd,.badge.cmd{background:#f36e45}
+.k-evt,.badge.evt{background:var(--lime)}
+.k-qry,.badge.qry{background:#8fc3e6}
+.k-rsp,.badge.rsp{background:#c9cfc6}
+.badge.step{background:#fffaf0}
+.row-track{height:12px}
+.arrow{position:relative;height:2px;top:5px;align-self:start}
+.arrow::after{content:"";position:absolute;top:-4px;border:5px solid transparent}
+.arrow.r::after{right:-2px;border-left-color:inherit;border-right:0}
+.arrow.l::after{left:-2px;border-right-color:inherit;border-left:0}
+.arrow.cmd{background:#f36e45;border-color:#f36e45}
+.arrow.evt{background:var(--lime);border-color:var(--lime)}
+.arrow.qry{background:#8fc3e6;border-color:#8fc3e6}
+.arrow.rsp{background:#c9cfc6;border-color:#c9cfc6}
+.arrow.async{background:repeating-linear-gradient(90deg,var(--lime) 0 6px,transparent 6px 10px)}
+.arrow.bad{background:repeating-linear-gradient(90deg,#f36e45 0 4px,transparent 4px 8px)}
+.sdot{width:12px;height:12px;border-radius:50%;justify-self:center;align-self:center;border:2px solid #fffaf0}
+.sdot.ok{background:var(--lime)}
+.sdot.warn{background:#f36e45}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:10px;color:#cad9c4;margin-top:8px;align-items:center}
+.legend i{display:inline-block;width:14px;height:3px;margin-right:4px;vertical-align:middle}
+.sim-panels{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.sim-panels .mono{font-size:10px;color:#cad9c4;letter-spacing:.06em}
+.estore{list-style:none;margin:6px 0 0;padding:8px 10px;min-height:90px;background:#22313a;border:1px solid #a3b0aa45;font:11px/1.7 "DM Mono",monospace;color:#e6eadf;counter-reset:ev}
+.estore li{counter-increment:ev}
+.estore li::before{content:"#" counter(ev) " ";color:var(--lime)}
+.estore li.dupe{color:#ffb999}
+.rmodel{margin:6px 0 0;padding:8px 10px;min-height:90px;background:#22313a;border:1px solid #a3b0aa45;font:11px/1.6 "DM Mono",monospace;color:#8fc3e6;white-space:pre-wrap;overflow-wrap:anywhere}
+.rmodel.stale{color:#ffb999}
+@media(max-width:760px){.lanes span{font-size:8px;letter-spacing:0}.sim-panels{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.srow{transition:none}}
+@media(max-width:760px){.play-card .classic-game{display:none}.play-card.is-open .classic-game{display:block}}
+.sim-toggle{display:none}
+@media(max-width:760px){.sim-toggle{display:inline-flex;font:700 14px "DM Sans",sans-serif;padding:12px 16px;border:2px solid var(--lime);background:transparent;color:var(--lime);cursor:pointer;margin:6px 0 4px}.demo-grid:not(.is-open) .sim{display:none}.demo-grid.is-open .sim-toggle{display:none}}
+.sim-toggle:focus-visible{outline:3px solid var(--lime);outline-offset:3px}</style></head><body>
+<a class="skip-link" href="#desktop">Skip the intro</a>
+<div class="boot" id="boot" aria-hidden="true"><pre id="boot-log"></pre><p class="boot-hint">Click or press any key to skip</p></div>
+<div class="lock" id="lock" role="region" aria-label="Lock screen">
+  <div class="lock-bg" aria-hidden="true"></div>
+  <div class="lock-clock"><p id="lock-date"></p><p id="lock-time" class="big"></p></div>
+  <div class="lock-notes">
+    <div class="notif"><span class="n-icon" style="background:#202b30">dz</span><div><b>denis.zone</b><span class="n-now">now</span><p>New chapter: Transact. Integrations in financial services.</p></div></div>
+    <div class="notif"><span class="n-icon" style="background:#c8102e">5.00</span><div><b>Last One Standing</b><span class="n-now">2m ago</span><p>Can you feel five seconds?</p></div></div>
+  </div>
+  <button type="button" class="unlock" id="unlock"><span class="chev" aria-hidden="true">⌃</span>Click or swipe up to unlock</button>
+</div>
+<main class="desktop" id="desktop" tabindex="-1" aria-label="DenisOS desktop">
+  <header class="menubar"><span class="logo">dz</span><b>DenisOS</b>
+    <nav class="menus" aria-label="Apps"><button type="button" data-open="about">About</button><button type="button" data-open="work">Work</button>
+    <button type="button" data-open="journey">Journey</button><button type="button" data-open="notes">Notes</button><button type="button" data-open="mail">Contact</button></nav>
+    <span class="status"><a href="https://denis.zone/" class="real">denis.zone ↗</a><span id="bar-time"></span></span></header>
+  <div class="desk-hello"><p class="kicker">DENIS MARTINS<br>SENIOR SOFTWARE ENGINEER</p><h1>I make things<br>work together.</h1>
+    <p>Integrations, APIs and event-driven systems. 17 years in, next stop Transact. Open an app to look around.</p></div>
+  <div class="home-grid" aria-label="Apps"><button type="button" class="app-icon" data-open="about" aria-label="Open About"><span class="glyph" style="background:#f36e45"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg></span><span class="app-label">About</span><i class="run-dot" aria-hidden="true"></i></button><button type="button" class="app-icon" data-open="journey" aria-label="Open Journey"><span class="glyph" style="background:#3d7be0"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h13"/><circle cx="19" cy="12" r="1.6"/></svg></span><span class="app-label">Journey</span><i class="run-dot" aria-hidden="true"></i></button><button type="button" class="app-icon" data-open="work" aria-label="Open Work"><span class="glyph" style="background:#202b30"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/></svg></span><span class="app-label">Work</span><i class="run-dot" aria-hidden="true"></i></button><button type="button" class="app-icon" data-open="terminal" aria-label="Open Terminal"><span class="glyph" style="background:#111"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 8 4 4-4 4M12 17h7"/></svg></span><span class="app-label">Terminal</span><i class="run-dot" aria-hidden="true"></i></button><button type="button" class="app-icon" data-open="sim" aria-label="Open Simulator"><span class="glyph" style="background:#6b4bd8"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="6" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="12" cy="18" r="2"/><path d="M7 6h10M6 8l5 8.3M18 8l-5 8.3"/></svg></span><span class="app-label">Simulator</span><i class="run-dot" aria-hidden="true"></i></button><button type="button" class="app-icon" data-open="notes" aria-label="Open Notes"><span class="glyph" style="background:#f2c94c"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 12h7M9 16h5"/></svg></span><span class="app-label">Notes</span><i class="run-dot" aria-hidden="true"></i></button><button type="button" class="app-icon" data-open="duel" aria-label="Open Word Duel"><span class="glyph" style="background:#1f6f58"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="7" height="10" rx="1.5"/><rect x="14" y="7" width="7" height="10" rx="1.5"/><path d="M10 12h4"/></svg></span><span class="app-label">Word Duel</span><i class="run-dot" aria-hidden="true"></i></button><button type="button" class="app-icon" data-open="timer" aria-label="Open Timer"><span class="glyph" style="background:#c8102e"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="7.5"/><path d="M12 9v4l2.5 2M10 2h4"/></svg></span><span class="app-label">Timer</span><i class="run-dot" aria-hidden="true"></i></button><button type="button" class="app-icon" data-open="mail" aria-label="Open Mail"><span class="glyph" style="background:#2f80ed"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span><span class="app-label">Mail</span><i class="run-dot" aria-hidden="true"></i></button></div>
+  <section class="window " id="win-about" data-app="about" role="dialog" aria-label="About Denis" hidden style="--w:720px;--h:620px"><header class="titlebar"><div class="lights"><button type="button" class="light close" aria-label="Close About Denis"></button><button type="button" class="light min" aria-label="Minimise About Denis"></button><span class="light zoom" aria-hidden="true"></span></div><span class="wtitle">About Denis</span><button type="button" class="back" aria-label="Back to home screen">‹ Home</button></header><div class="wbody"><div class="about"><div class="about-head"><img src="/assets/photos/street-portrait-480.webp" alt="Denis on a sunny street" width="480" height="640"><div><p class="kicker">ABOUT THIS COMPUTER</p><h2>Denis Martins</h2><dl class="spec"><dt>Model</dt><dd>Senior software engineer</dd><dt>Build</dt><dd>2009 → 17 years</dd><dt>Specialty</dt><dd>Integrations · APIs · event-driven systems</dd><dt>Next</dt><dd>Transact, financial services</dd><dt>Runs on</dt><dd>Arsenal, travel, good food, one more rep</dd></dl></div></div><p class="lead">I build software for a living, but I'd rather not spend every conversation talking about it.</p><div class="tiles"><figure><img src="/assets/photos/arsenal-dressing-room-480.webp" alt="Denis in the Arsenal dressing room" loading="lazy" width="480" height="640"><figcaption><b>North London is red.</b> A long-term relationship with no refunds.</figcaption></figure><figure><img src="/assets/photos/volcanic-rocks-480.webp" alt="Denis on volcanic rocks in Tenerife" loading="lazy" width="480" height="640"><figcaption><b>I'd rather go somewhere.</b> Back to Tenerife more than once.</figcaption></figure><figure><img src="/assets/photos/restaurant-table-480.webp" alt="Steak and vegetables at a restaurant" loading="lazy" width="480" height="853"><figcaption><b>Have you eaten?</b> Sometimes the best memory is lunch.</figcaption></figure><figure><img src="/assets/photos/gym-training-480.webp" alt="Denis taking a mirror photo at the gym" loading="lazy" width="480" height="945"><figcaption><b>One more rep.</b> Some problems can't be solved by restarting the server.</figcaption></figure></div></div></div></section><section class="window " id="win-journey" data-app="journey" role="dialog" aria-label="Journey — 12 roles since 2009" hidden style="--w:640px;--h:600px"><header class="titlebar"><div class="lights"><button type="button" class="light close" aria-label="Close Journey — 12 roles since 2009"></button><button type="button" class="light min" aria-label="Minimise Journey — 12 roles since 2009"></button><span class="light zoom" aria-hidden="true"></span></div><span class="wtitle">Journey — 12 roles since 2009</span><button type="button" class="back" aria-label="Back to home screen">‹ Home</button></header><div class="wbody"><div class="journey"><section class="j-chapter"><h3><span>2009–2013</span>The foundations</h3><ol><li><div class="j-when">Mar 2009 – Sep 2011</div><div><strong>Influential Software</strong><span class="j-role">Software Developer</span><p>Where it started: backend systems and month-end reporting for a global sales platform.</p></div></li><li><div class="j-when">Oct 2011 – Feb 2013</div><div><strong>GForces</strong><span class="j-role">Backend Developer</span><p>Added test coverage to an automotive platform and built a vehicle management system on outside vehicle data.</p></div></li></ol></section><section class="j-chapter"><h3><span>2013–2019</span>Building products</h3><ol><li><div class="j-when">Oct 2013 – Jan 2014</div><div><strong>TME Solutions</strong><span class="j-role">Developer</span><p>Looked after a bespoke CMS written in plain PHP, with no framework to lean on.</p></div></li><li><div class="j-when">Feb 2014 – Apr 2015</div><div><strong>Huddlebuy</strong><span class="j-role">Backend Developer → Lead Developer</span><p>Joined as a backend developer and became lead, owning payments, data encryption and integrations like Salesforce and Twilio.</p></div></li><li><div class="j-when">May 2015 – Jun 2016</div><div><strong>QOREX</strong><span class="j-role">Software Engineer · Contract</span><p>Built features for a SaaS platform for business planning and project management.</p></div></li><li><div class="j-when">Feb 2017 – Jul 2018</div><div><strong>IP Centrum</strong><span class="j-role">PHP Developer · Contract</span><p>Built patent and trademark renewal workflows covering more than 50 countries.</p></div></li><li><div class="j-when">Oct 2018 – Mar 2019</div><div><strong>Link Health Group</strong><span class="j-role">Software Engineer · Contract</span><p>Built an education platform with social features, from the TypeScript front end to the Laravel API.</p></div></li></ol></section><section class="j-chapter"><h3><span>2019–2024</span>Engineering at scale</h3><ol><li><div class="j-when">Mar 2019 – Jun 2021</div><div><strong>Deko</strong><span class="j-role">Software Engineer</span><p>Moved lending services out of a legacy monolith into Java services, a piece at a time, using the Strangler Pattern.</p></div></li><li><div class="j-when">Jul 2021 – Jan 2022</div><div><strong>WorldFirst</strong><span class="j-role">Senior Software Engineer · Contract</span><p>Worked on customer registration and account management for a payments platform, including Twilio verification.</p></div></li><li><div class="j-when">Jan 2022 – Apr 2023</div><div><strong>uMotif</strong><span class="j-role">Senior Software Developer · Contract</span><p>Built APIs and configurable patient-data forms used across clinical research studies.</p></div></li><li><div class="j-when">Apr 2023 – Mar 2024</div><div><strong>Raymond James</strong><span class="j-role">Software Engineer · Contract</span><p>Moved a wealth management platform to PHP 8 and MySQL 8, with regression tests to keep releases safe.</p></div></li></ol></section><section class="j-chapter"><h3><span>2024–2026</span>Designing systems</h3><ol><li><div class="j-when">Jun 2024 – Oct 2026</div><div><strong>Telecom Acquisitions</strong><span class="j-role">Senior Software Engineer</span><p>Designed supplier-agnostic APIs and event-driven workflows that connect broadband and energy sales to suppliers, on Azure.</p></div></li></ol></section><section class="j-chapter j-next"><h3><span>2026 →</span>Up next</h3><ol><li><div class="j-when">Nov 2026</div><div><strong>Transact</strong><span class="j-role">Integrations · Financial services</span><p>New domain, same instincts.</p></div></li></ol></section></div></div></section><section class="window " id="win-work" data-app="work" role="dialog" aria-label="Work" hidden style="--w:900px;--h:640px"><header class="titlebar"><div class="lights"><button type="button" class="light close" aria-label="Close Work"></button><button type="button" class="light min" aria-label="Minimise Work"></button><span class="light zoom" aria-hidden="true"></span></div><span class="wtitle">Work</span><button type="button" class="back" aria-label="Back to home screen">‹ Home</button></header><div class="wbody"><div class="work"><p class="kicker">SELECTED WORK</p><h2>Three problems worth solving.</h2><p class="muted">Kept generic on purpose: the problem, the decision, the trade-off and what changed.</p><article class="case"><div class="case-head"><span class="mono">2024 — 2026 · TELECOM ACQUISITIONS</span><h3>Making supplier onboarding<br><em>repeatable.</em></h3><span class="case-tags mono">AZURE · SERVICE BUS · EVENT-DRIVEN · DOMAIN MODELLING · MENTORING</span></div><dl><div><dt class="mono">Problem</dt><dd>Every supplier had its own API, data formats, rules and failure modes. Each new one meant custom work spread across sales journeys and back-office systems.</dd></div><div><dt class="mono">Decision</dt><dd>A supplier-agnostic integration layer: one internal domain model, an adapter per supplier, and business events on a message bus instead of point-to-point calls. I designed it and owned it from domain modelling through deployment, monitoring and production support.</dd></div><div><dt class="mono">Trade-off</dt><dd>More design up front, and eventual consistency to handle between services, in exchange for a core that doesn't change every time a supplier does.</dd></div><div><dt class="mono">Result</dt><dd>Adding a supplier became repeatable work instead of a project, coupling between systems dropped, and high-volume sales stayed reliable and observable. I also mentored two developers on the team.</dd></div></dl></article><article class="case"><div class="case-head"><span class="mono">2023 — 2024 · RAYMOND JAMES</span><h3>Upgrading a regulated platform<br><em>without the drama.</em></h3><span class="case-tags mono">PHP 8 · MYSQL 8 · PHPUNIT · REGRESSION TESTING · INCREMENTAL MIGRATION</span></div><dl><div><dt class="mono">Problem</dt><dd>Business-critical wealth-management systems needed to move from PHP 7.4 to 8.2 and from MySQL 5 to 8. The code quietly relied on behaviour the new versions no longer tolerate: stricter SQL grouping, invalid dates, warnings that become errors.</dd></div><div><dt class="mono">Decision</dt><dd>Build a regression-test baseline first, then fix compatibility issues incrementally across applications and databases, instead of rewriting.</dd></div><div><dt class="mono">Trade-off</dt><dd>Time spent on tests before any visible progress, in exchange for releases everyone could trust.</dd></div><div><dt class="mono">Result</dt><dd>Migration and release risk went down without sacrificing stability for the people who depended on the platform.</dd></div></dl></article><article class="case"><div class="case-head"><span class="mono">2019 — 2021 · DEKO</span><h3>Replacing a monolith without<br><em>stopping the business.</em></h3><span class="case-tags mono">JAVA · DDD · EVENT STORMING · STRANGLER PATTERN · AWS SQS</span></div><dl><div><dt class="mono">Problem</dt><dd>A long-running lending platform had grown into a legacy monolith, and the lending operations it supported couldn't stop while it was replaced.</dd></div><div><dt class="mono">Decision</dt><dd>Domain-driven design and event storming to find the real business boundaries, then the Strangler Pattern: move one capability at a time into Java services, with Go and Python components, connected by asynchronous messaging on AWS SQS.</dd></div><div><dt class="mono">Trade-off</dt><dd>A slower, staged migration with old and new running side by side, instead of a big-bang rewrite and a risky cut-over.</dd></div><div><dt class="mono">Result</dt><dd>Business-critical lending kept running throughout, while capabilities moved to the new platform step by step.</dd></div></dl></article><h2 class="mt">The kind of platform I build</h2><figure class="diagram-figure"><figcaption class="mono">A SIMPLIFIED PICTURE OF THE KIND OF PLATFORM I DESIGN AND RUN</figcaption><svg class="sys-diagram sys-wide" viewBox="0 0 600 354" role="img" aria-labelledby="sys-t"><title id="sys-t">Customer web apps, internal tools and a self-service portal call a core API and an integration API, which share a database. The integration API calls partner APIs directly. The APIs publish events to a message bus; independent workers subscribe and sync each event to an external SaaS, comms or messaging platform. Status feeds and callbacks, some arriving by webhook, are published back to the bus.</title><defs><marker id="gw" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 8 4 0 8z" fill="#b0c69a"/></marker><marker id="ow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 8 4 0 8z" fill="#dda980"/></marker></defs><text x="2" y="18" font-family="DM Mono,ui-monospace,monospace" font-size="9" letter-spacing=".12em" fill="#8d978a">CLIENTS</text><rect x="106" y="4" width="330" height="326" rx="4" fill="none" stroke="#3a453c" stroke-dasharray="3 4"/><text x="114" y="18" font-family="DM Mono,ui-monospace,monospace" font-size="9" letter-spacing=".12em" fill="#8d978a">CLOUD PLATFORM</text><rect x="444" y="4" width="154" height="326" rx="4" fill="none" stroke="#3a453c" stroke-dasharray="3 4"/><text x="452" y="18" font-family="DM Mono,ui-monospace,monospace" font-size="9" letter-spacing=".12em" fill="#8d978a">EXTERNAL</text><g font-family="DM Mono,ui-monospace,monospace" font-size="11" fill="#d9ddd4" text-anchor="middle"><rect x="0" y="44" width="94" height="40" rx="2" fill="#1b221d" stroke="#475149"/><text x="47.0" y="61.0">Customer</text><text x="47.0" y="75.0">web apps</text><rect x="0" y="132" width="94" height="40" rx="2" fill="#1b221d" stroke="#475149"/><text x="47.0" y="149.0">Internal</text><text x="47.0" y="163.0">tools</text><rect x="0" y="220" width="94" height="40" rx="2" fill="#1b221d" stroke="#475149"/><text x="47.0" y="237.0">Self-service</text><text x="47.0" y="251.0">portal</text><rect x="120" y="52" width="108" height="44" rx="2" fill="#20291f" stroke="#b0c69a"/><text x="174.0" y="71.0" fill="#b0c69a">Core</text><text x="174.0" y="85.0" fill="#b0c69a">API</text><rect x="128" y="128" width="92" height="34" rx="2" fill="#1b221d" stroke="#475149"/><text x="163" y="149.0">Database</text><path d="M200 138.0v12a6 2.4 0 0 0 12 0v-12" fill="#141917" stroke="#7f8f7c"/><ellipse cx="206" cy="138.0" rx="6" ry="2.4" fill="#141917" stroke="#7f8f7c"/><rect x="120" y="196" width="108" height="44" rx="2" fill="#20291f" stroke="#b0c69a"/><text x="174.0" y="215.0" fill="#b0c69a">Integration</text><text x="174.0" y="229.0" fill="#b0c69a">API</text><rect x="246" y="36" width="22" height="240" rx="2" fill="#20291f" stroke="#b0c69a"/><text x="257" y="156" fill="#b0c69a" font-size="10" letter-spacing=".14em" transform="rotate(-90 257 156)" dy="3.5">MESSAGE BUS</text><rect x="286" y="44" width="140" height="40" rx="2" fill="#1b221d" stroke="#475149"/><text x="356.0" y="68.0">Sync worker</text><rect x="286" y="132" width="140" height="40" rx="2" fill="#1b221d" stroke="#475149"/><text x="356.0" y="156.0">Comms worker</text><rect x="286" y="220" width="140" height="40" rx="2" fill="#1b221d" stroke="#475149"/><text x="356.0" y="244.0">Notify worker</text><rect x="454" y="44" width="136" height="40" rx="2" fill="#1b221d" stroke="#475149"/><text x="522.0" y="68.0">SaaS platform</text><rect x="454" y="132" width="136" height="40" rx="2" fill="#1b221d" stroke="#475149"/><text x="522.0" y="156.0">Comms platform</text><rect x="454" y="220" width="136" height="40" rx="2" fill="#1b221d" stroke="#475149"/><text x="522.0" y="244.0">Messaging provider</text><rect x="454" y="288" width="136" height="36" rx="2" fill="#1b221d" stroke="#475149"/><text x="522.0" y="310.0">Partner APIs</text></g><g fill="none" stroke="#7f8f7c" stroke-width="1.2"><path d="M174 96V128"/><path d="M174 196V162"/></g><g fill="none" stroke="#b0c69a" stroke-width="1.4" marker-end="url(#gw)"><path d="M94 62C108 62 104 68 118 68"/><path d="M94 72C110 72 102 212 118 212"/><path d="M94 148C108 148 104 84 118 84"/><path d="M94 158C110 158 102 226 118 226"/><path d="M94 240C110 240 102 92 118 92"/><path d="M426 64H452"/><path d="M426 152H452"/><path d="M426 240H452"/><path d="M228 232C240 232 238 306 252 306H452"/></g><g fill="none" stroke="#b0c69a" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#gw)"><path d="M228 74H244"/><path d="M228 218H244"/><path d="M268 58H284"/><path d="M268 146H284"/><path d="M268 234H284"/><path d="M286 162H270"/><path d="M286 250H270"/><path d="M452 164H428"/></g><g fill="none" stroke="#dda980" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#ow)"><path d="M452 252H428"/></g><text x="356" y="186" font-family="DM Mono,ui-monospace,monospace" font-size="9" fill="#8fa58a" text-anchor="middle">status feed</text><text x="356" y="274" font-family="DM Mono,ui-monospace,monospace" font-size="9" fill="#dda980" text-anchor="middle">status callbacks</text><g font-family="DM Mono,ui-monospace,monospace" font-size="10" fill="#a3a99e"><path d="M2 342h22" stroke="#b0c69a" stroke-width="1.4"/><text x="30" y="346">HTTP / REST</text><path d="M150 342h22" stroke="#b0c69a" stroke-width="1.4" stroke-dasharray="4 3"/><text x="178" y="346">events &amp; feeds</text><path d="M320 342h22" stroke="#dda980" stroke-width="1.2" stroke-dasharray="4 3"/><text x="348" y="346">webhooks</text></g></svg><svg class="sys-diagram sys-tall" viewBox="0 0 322 448" role="img" aria-labelledby="sys-t2"><title id="sys-t2">Customer web apps, internal tools and a self-service portal call a core API and an integration API, which share a database. The integration API calls partner APIs directly. The APIs publish events to a message bus; independent workers subscribe and sync each event to an external SaaS, comms or messaging platform. Status feeds and callbacks, some arriving by webhook, are published back to the bus.</title><defs><marker id="gt" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 8 4 0 8z" fill="#b0c69a"/></marker><marker id="ot" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 8 4 0 8z" fill="#dda980"/></marker></defs><text x="2" y="10" font-family="DM Mono,ui-monospace,monospace" font-size="9" letter-spacing=".12em" fill="#8d978a">CLIENTS</text><rect x="0" y="70" width="322" height="232" rx="4" fill="none" stroke="#3a453c" stroke-dasharray="3 4"/><text x="8" y="84" font-family="DM Mono,ui-monospace,monospace" font-size="9" letter-spacing=".12em" fill="#8d978a">CLOUD PLATFORM</text><rect x="0" y="318" width="322" height="96" rx="4" fill="none" stroke="#3a453c" stroke-dasharray="3 4"/><text x="8" y="332" font-family="DM Mono,ui-monospace,monospace" font-size="9" letter-spacing=".12em" fill="#8d978a">EXTERNAL</text><g font-family="DM Mono,ui-monospace,monospace" font-size="11" fill="#d9ddd4" text-anchor="middle"><rect x="6" y="16" width="100" height="40" rx="2" fill="#1b221d" stroke="#475149"/><text x="56.0" y="33.0">Customer</text><text x="56.0" y="47.0">web apps</text><rect x="111" y="16" width="100" height="40" rx="2" fill="#1b221d" stroke="#475149"/><text x="161.0" y="33.0">Internal</text><text x="161.0" y="47.0">tools</text><rect x="216" y="16" width="100" height="40" rx="2" fill="#1b221d" stroke="#475149"/><text x="266.0" y="33.0">Self-service</text><text x="266.0" y="47.0">portal</text><rect x="6" y="96" width="100" height="40" rx="2" fill="#20291f" stroke="#b0c69a"/><text x="56.0" y="113.0" fill="#b0c69a">Core</text><text x="56.0" y="127.0" fill="#b0c69a">API</text><rect x="112" y="100" width="96" height="32" rx="2" fill="#1b221d" stroke="#475149"/><text x="146" y="120.0">Database</text><path d="M188 109.0v12a6 2.4 0 0 0 12 0v-12" fill="#141917" stroke="#7f8f7c"/><ellipse cx="194" cy="109.0" rx="6" ry="2.4" fill="#141917" stroke="#7f8f7c"/><rect x="214" y="96" width="102" height="40" rx="2" fill="#20291f" stroke="#b0c69a"/><text x="265.0" y="113.0" fill="#b0c69a">Integration</text><text x="265.0" y="127.0" fill="#b0c69a">API</text><rect x="6" y="196" width="282" height="22" rx="2" fill="#20291f" stroke="#b0c69a"/><text x="147" y="211" fill="#b0c69a" font-size="10" letter-spacing=".14em">MESSAGE BUS</text><rect x="6" y="248" width="90" height="36" rx="2" fill="#1b221d" stroke="#475149"/><text x="51.0" y="270.0">Sync worker</text><rect x="102" y="248" width="90" height="36" rx="2" fill="#1b221d" stroke="#475149"/><text x="147.0" y="270.0">Comms worker</text><rect x="198" y="248" width="90" height="36" rx="2" fill="#1b221d" stroke="#475149"/><text x="243.0" y="270.0">Notify worker</text><rect x="6" y="344" width="74" height="40" rx="2" fill="#1b221d" stroke="#475149"/><text x="43.0" y="361.0">SaaS</text><text x="43.0" y="375.0">platform</text><rect x="84" y="344" width="74" height="40" rx="2" fill="#1b221d" stroke="#475149"/><text x="121.0" y="361.0">Comms</text><text x="121.0" y="375.0">platform</text><rect x="162" y="344" width="74" height="40" rx="2" fill="#1b221d" stroke="#475149"/><text x="199.0" y="361.0">Messaging</text><text x="199.0" y="375.0">provider</text><rect x="240" y="344" width="76" height="40" rx="2" fill="#1b221d" stroke="#475149"/><text x="278.0" y="361.0">Partner</text><text x="278.0" y="375.0">APIs</text></g><g fill="none" stroke="#7f8f7c" stroke-width="1.2"><path d="M106 116H112"/><path d="M214 116H208"/></g><g fill="none" stroke="#b0c69a" stroke-width="1.4"><path d="M56 56V65M161 56V65M266 56V65M56 65H266"/></g><g fill="none" stroke="#b0c69a" stroke-width="1.4" marker-end="url(#gt)"><path d="M56 65V94"/><path d="M265 65V94"/><path d="M45 284V342"/><path d="M150 284C150 314 140 314 140 342"/><path d="M245 284C245 314 226 314 226 342"/><path d="M302 136V306C302 326 290 322 290 342"/></g><g fill="none" stroke="#b0c69a" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#gt)"><path d="M40 136V194"/><path d="M240 136V194"/><path d="M45 218V246"/><path d="M141 218V246"/><path d="M237 218V246"/><path d="M160 248V220"/><path d="M256 248V220"/><path d="M98 342C98 314 116 314 116 286"/></g><g fill="none" stroke="#dda980" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#ot)"><path d="M172 342C172 314 208 314 208 286"/></g><g font-family="DM Mono,ui-monospace,monospace" font-size="10" fill="#a3a99e"><path d="M2 436h22" stroke="#b0c69a" stroke-width="1.4"/><text x="30" y="440">HTTP / REST</text><path d="M106 436h20" stroke="#b0c69a" stroke-width="1.4" stroke-dasharray="4 3"/><text x="131" y="440">events &amp; feeds</text><path d="M230 436h20" stroke="#dda980" stroke-width="1.2" stroke-dasharray="4 3"/><text x="255" y="440">webhooks</text></g></svg><ul class="runs-on" aria-label="Runs on the cloud"><li>Azure &amp; AWS</li><li>Containers</li><li>Serverless functions</li><li>Message queues</li><li>Infrastructure as code</li><li>CI/CD</li><li>Monitoring &amp; tracing</li></ul></figure><h2 class="mt">Five things I hold to</h2><div class="cards principles"><article class="card"><div class="mono">01</div><h3>Design for failure.</h3><p>Timeouts, retries, idempotency and outboxes go in on day one, not after the first incident. Partners will be slow. Queues will go down.</p></article><article class="card"><div class="mono">02</div><h3>Make change safe.</h3><p>A test baseline first, then small, reversible steps. I'd rather modernise around what already works than bet the business on a rewrite.</p></article><article class="card"><div class="mono">03</div><h3>Model the business first.</h3><p>Domain modelling and event storming before code. Getting the boundaries right saves more time than any clever implementation.</p></article><article class="card"><div class="mono">04</div><h3>Own it in production.</h3><p>Logging, tracing and alerts are part of the feature. If I built it, I want to know when it's unhappy, before a customer does.</p></article><article class="card"><div class="mono">05</div><h3>Raise the team.</h3><p>Mentoring, honest code reviews and writing decisions down, so knowledge doesn't live in one person's head.</p></article></div></div></div></section><section class="window dark" id="win-terminal" data-app="terminal" role="dialog" aria-label="denis@os — zsh" hidden style="--w:640px;--h:400px"><header class="titlebar"><div class="lights"><button type="button" class="light close" aria-label="Close denis@os — zsh"></button><button type="button" class="light min" aria-label="Minimise denis@os — zsh"></button><span class="light zoom" aria-hidden="true"></span></div><span class="wtitle">denis@os — zsh</span><button type="button" class="back" aria-label="Back to home screen">‹ Home</button></header><div class="wbody"><div class="term" id="term"><div class="term-log" id="term-log"><span class="p">denis@os</span>:<span class="d">~</span>$ whoami
+Denis Martins. Senior software engineer, 17 years in.
+Type <b>help</b> to see what you can ask.
+</div><form id="term-form" autocomplete="off"><label for="term-in"><span class="p">denis@os</span>:<span class="d">~</span>$</label><input id="term-in" spellcheck="false" autocapitalize="off" aria-label="Terminal command"></form></div></div></section><section class="window dark" id="win-sim" data-app="sim" role="dialog" aria-label="Simulator — POST /orders" hidden style="--w:760px;--h:640px"><header class="titlebar"><div class="lights"><button type="button" class="light close" aria-label="Close Simulator — POST /orders"></button><button type="button" class="light min" aria-label="Minimise Simulator — POST /orders"></button><span class="light zoom" aria-hidden="true"></span></div><span class="wtitle">Simulator — POST /orders</span><button type="button" class="back" aria-label="Back to home screen">‹ Home</button></header><div class="wbody"><div class="simwrap"><p class="muted">An order moving through a system built the way I'd build one: bounded contexts, an aggregate, an event store, a payment saga and a separate read model. Break something, then place the order.</p><button class="run" id="run-demo" type="button">PLACE AN ORDER ↗</button><div class="pipeline sim" aria-label="Interactive simulation of an order flowing through a distributed, event-driven system"><div class="request"><span class="mono">PLACE AN ORDER · DDD + CQRS + SAGA</span><code>POST /orders</code></div><fieldset class="chaos"><legend class="mono">BREAK SOMETHING (OPTIONAL)</legend><button type="button" class="chaos-btn" data-chaos="declined" aria-pressed="false">Payment declined</button><button type="button" class="chaos-btn" data-chaos="slow" aria-pressed="false">Partner is slow</button><button type="button" class="chaos-btn" data-chaos="lag" aria-pressed="false">Read model lagging</button><button type="button" class="chaos-btn" data-chaos="dup" aria-pressed="false">Duplicate command</button><button type="button" class="chaos-btn" data-chaos="bus" aria-pressed="false">Message bus down</button></fieldset><div class="seq" id="seq"><div class="lanes" aria-hidden="true"><span>Client</span><span>Ordering</span><span>Pricing</span><span>Payments</span><span>Notify</span><span>Read side</span></div><div class="seq-rows" id="seq-rows"><p class="seq-empty mono">// Press “place an order” to follow it across the system.</p></div><div class="legend mono" aria-hidden="true"><i class="k-cmd"></i>command <i class="k-evt"></i>event <i class="k-qry"></i>query <i class="k-rsp"></i>reply</div></div><div class="sim-panels"><div><span class="mono">EVENT STORE · ORDER STREAM</span><ol class="estore" id="estore"></ol></div><div><span class="mono">READ MODEL · ORDER SUMMARY</span><pre class="rmodel" id="rmodel">{ }</pre></div></div><ul class="lessons" id="lessons" aria-live="polite"></ul></div></div></div></section><section class="window " id="win-notes" data-app="notes" role="dialog" aria-label="Notes" hidden style="--w:820px;--h:560px"><header class="titlebar"><div class="lights"><button type="button" class="light close" aria-label="Close Notes"></button><button type="button" class="light min" aria-label="Minimise Notes"></button><span class="light zoom" aria-hidden="true"></span></div><span class="wtitle">Notes</span><button type="button" class="back" aria-label="Back to home screen">‹ Home</button></header><div class="wbody"><div class="notesapp"><nav class="n-list" aria-label="Notes"><button type="button" class="n-item" data-note="0" aria-pressed="true"><strong>A word game became a systems problem</strong><span>19 October 2026</span></button><button type="button" class="n-item" data-note="1" aria-pressed="false"><strong>The Conversations We’re Losing to AI</strong><span>14 June 2026</span></button><button type="button" class="n-item" data-note="2" aria-pressed="false"><strong>Modernising without starting again</strong><span>3 February 2026</span></button></nav><div class="n-view"><article class="n-body" data-note="0"><p class="n-date">19 October 2026</p><h2>A word game became a systems problem</h2><p class="n-sub">How a simple letter-changing game turned into real-time multiplayer engineering.</p><p>Word Duel started with a small idea: change one letter of a word, make another valid word, and keep going. TALK becomes WALK, then WALL. It doesn’t take much explaining. Building it so two people can compete fairly is a different problem.</p><h2>The browser isn’t the referee</h2><p>The interface uses Vite and vanilla JavaScript; the backend runs on Cloudflare Workers, with each game room held in its own Durable Object. The server decides whether a move is valid. The browser can display a countdown and let a player edit tiles, but it doesn’t get to decide whose turn it is or whether a late move should count.</p><p>A room applies one action at a time, then pushes the new state to both players over WebSockets. That matters when players act at almost the same time, a deadline expires, or a request is retried.</p><h2>A word can’t just be valid</h2><p>It has to be the right length, change exactly the configured number of letters in place, and not have been used before. The shared set of used words persists across rounds and rematches. The rules are simple; reliably enforcing them is the interesting part.</p><h2>The computer plays the same game</h2><p>The bot occupies a player seat and plays through the same server-side engine. Difficulty changes think time and move strategy, not the rules of validation.</p><h2>All the little edges</h2><p>Turn deadlines are defined by the server, and each room sets an alarm for the next one. The same alarm closes idle connections and clears out old rooms. Match results are recorded with receipts so retries don’t create extra wins. Definitions come from a static WordNet-backed word dataset.</p><p class="takeaway">The lesson wasn’t really about words. It was how quickly a tiny interaction becomes a problem of shared state, fairness and handling failure.</p><p><a href="https://duel.denis.zone/">Play the game ↗</a></p></article><article class="n-body" data-note="1" hidden><p class="n-date">14 June 2026</p><h2>The Conversations We’re Losing to AI</h2><p class="n-sub">Are we becoming more productive developers but less collaborative engineering teams?</p><p>There’s been plenty of debate about whether AI will replace software developers. I’m more interested in a different question: what is AI doing to the way developers work with each other?</p><p>I’ve been writing software for 17 years, and AI is one of the biggest changes I’ve seen. I use it every day and wouldn’t go back. But I’ve noticed a shift in how my recent teams work, and I wonder how much of it is down to AI.</p><p>Are we becoming more productive as individuals at the expense of collaboration?</p><h2>Fewer whiteboards, thinner reviews</h2><p>Working through a hard problem used to mean getting a few developers around a whiteboard. Someone suggested an approach, someone disagreed, someone spotted what everyone had missed. You might spend an hour on something that took 20 minutes to build, but everyone understood how you got there.</p><p>Now it’s tempting to open Claude, describe the problem and solve it alone. It’s quick and often excellent. But nobody else was part of the process.</p><p>Code reviews are going the same way. They used to be one of the best ways to understand how colleagues thought. Now AI can review the code, find the bugs and even make the fixes. The risk is AI writing the code, AI reviewing it and developers approving changes they haven’t fully understood.</p><p>A review isn’t just about catching bugs. It’s about knowing what your colleagues are building and why.</p><h2>The questions we no longer ask</h2><p>“Have you worked with this library before?” “Why was this service built this way?” “Can you have a quick look at something?”</p><p>Those questions often went well beyond the original problem. You learned why decisions were made and picked up techniques from people with more experience. Now we ask AI instead.</p><p>Not every question needs a colleague. But some of those interruptions were how knowledge spread around a team. That matters most for junior developers. AI is an incredible learning tool, but learning from a senior developer means watching how they think, not just getting the right answer. And some knowledge isn’t in the docs or the code. It lives with the people who built the system.</p><h2>Are we still working as teams?</h2><p>Imagine five developers on the same application. Each picks up a ticket, works through it with Claude, gets an AI review and moves on. Tickets move. Features ship.</p><p>But how much do they know about what each other is building? Could they maintain each other’s code? Or have we created five developers working independently with five AI assistants?</p><p>Stand-ups and sprint planning coordinate the work. They don’t build a shared understanding of the system. And they don’t replace a colleague who knows the history, knows the business and might tell you that you shouldn’t be building the thing at all.</p><p>Productivity numbers won’t show this. What happens when a senior developer leaves, or something breaks in production and the person who built it isn’t around? You can’t measure shared knowledge and trust by counting merged pull requests.</p><h2>So, what’s the answer?</h2><p>Not to stop using AI. It has removed a lot of tedious work, and not every question needs a team discussion. But we should be more deliberate about the conversations we keep.</p><ul><li>Use AI to explore an architecture, then talk it through with your colleagues.</li><li>Let AI review pull requests, but keep reviewing each other’s work.</li><li>Encourage juniors to use AI, but don’t let it replace mentorship.</li><li>When you solve something interesting, share what you learned.</li></ul><p>The goal isn’t more code. It’s better software built by better teams.</p><p class="takeaway">AI is making us better at working independently. Whether it’s making us better engineering teams is another question entirely.</p></article><article class="n-body" data-note="2" hidden><p class="n-date">3 February 2026</p><h2>Modernising without starting again</h2><p class="n-sub">Sometimes the difficult engineering decision is to keep what already works.</p><p>When you spend time in mature software systems, you learn that rewriting everything is rarely the only option, and often isn’t the best one.</p><p>Upgrading older PHP and MySQL applications isn’t just changing version numbers. Existing code may depend on behaviours that newer runtimes and databases no longer tolerate.</p><h2>The hidden contracts</h2><p>A warning that used to go unnoticed can become a production issue. A query that happened to return the desired result can fail under stricter grouping rules. Previously accepted dates can become invalid. Those assumptions need to be understood before architecture changes are made.</p><h2>Controlled change beats a heroic rewrite</h2><p>My preference is to establish a reliable test baseline, improve observability and make changes incrementally. Some problems need targeted compatibility fixes. Others deserve redesign. Those shouldn’t be confused.</p><p>In practice, on a recent PHP 7.4 to 8.2 and MySQL 5 to 8 upgrade, that meant writing regression tests around the behaviour people relied on before touching the runtime, then fixing compatibility issues one application at a time. The tests made each release boring, which is exactly what you want from a migration.</p><p>On another platform, incremental replacement using the Strangler Pattern allowed parts of an older system to evolve without shutting down the business workflows that depended on it.</p><h2>Keep the business in the conversation</h2><p>A cleaner architecture is valuable when it improves reliability, maintainability or delivery. A rewrite that delays useful work needs a stronger reason than ‘this would be nicer to build’.</p><p class="takeaway">The aim isn’t to make every system new. It’s to make the systems people depend on safer to change.</p></article></div></div></div></section><section class="window " id="win-duel" data-app="duel" role="dialog" aria-label="Word Duel" hidden style="--w:560px;--h:640px"><header class="titlebar"><div class="lights"><button type="button" class="light close" aria-label="Close Word Duel"></button><button type="button" class="light min" aria-label="Minimise Word Duel"></button><span class="light zoom" aria-hidden="true"></span></div><span class="wtitle">Word Duel</span><button type="button" class="back" aria-label="Back to home screen">‹ Home</button></header><div class="wbody"><div class="gamewrap"><p class="muted">Change one letter at a time to make a new word. Every valid word resets the 60-second clock.</p><div class="classic-game"><div class="word-mini" id="word-mini"><div class="word-feature-heading">WORD DUEL <span>MINI / 1 LETTER</span></div><div class="word-mini-meta"><span>CHANGE ONE LETTER</span><span id="word-mini-streak">STREAK 0</span></div><div class="word-mini-dashboard"><div class="word-mini-clock" role="timer" aria-label="Time remaining"><span>TIME LEFT</span><strong id="word-mini-time">1:00</strong></div><div class="word-mini-last"><span>LAST WORD</span><strong id="word-mini-last">—</strong></div></div><div class="word-mini-definition"><span>CURRENT WORD &amp; MEANING</span><div><strong id="word-mini-current">—</strong><p id="word-mini-meaning">Loading meaning…</p></div></div><div class="word-mini-history"><span>YOUR WORDS</span><div id="word-mini-history" aria-label="Words played in this round">—</div></div><div class="word-mini-tiles" id="word-mini-tiles" role="group" aria-label="Edit one letter to make a new four-letter word"></div><div class="word-mini-alphabet" id="word-mini-alphabet" aria-label="Choose a replacement letter"></div><div class="word-mini-controls"><button type="button" id="word-mini-submit">Submit word ↗</button><button type="button" id="word-mini-reset">New round ↻</button></div><div id="word-mini-feedback" class="word-mini-feedback" role="status" aria-live="polite">Tap a tile, then choose a letter.</div></div></div><a class="ext" href="https://duel.denis.zone/" target="_blank" rel="noopener">Play the full game: duel.denis.zone ↗</a></div></div></section><section class="window " id="win-timer" data-app="timer" role="dialog" aria-label="Timer" hidden style="--w:460px;--h:360px"><header class="titlebar"><div class="lights"><button type="button" class="light close" aria-label="Close Timer"></button><button type="button" class="light min" aria-label="Minimise Timer"></button><span class="light zoom" aria-hidden="true"></span></div><span class="wtitle">Timer</span><button type="button" class="back" aria-label="Back to home screen">‹ Home</button></header><div class="wbody"><div class="gamewrap"><p class="muted">Start the timer and stop it at exactly 5.00 seconds.</p><div class="classic-game"><div class="los-try"><span class="preview-small">Try it here</span><div class="timer-readout" id="timer-display" aria-label="Elapsed time in minutes, seconds and hundredths">00:00<span>.00</span></div><div class="timer-track" aria-hidden="true"><i id="timer-progress"></i></div><div class="timer-actions"><button type="button" id="timer-action">Start timer</button><span class="timer-feedback" id="timer-feedback" role="status" aria-live="polite">Try to stop at exactly 5.00 seconds.</span></div></div></div><a class="ext" href="https://play.denis.zone/" target="_blank" rel="noopener">Play Last One Standing: play.denis.zone ↗</a></div></div></section><section class="window " id="win-mail" data-app="mail" role="dialog" aria-label="New message" hidden style="--w:520px;--h:360px"><header class="titlebar"><div class="lights"><button type="button" class="light close" aria-label="Close New message"></button><button type="button" class="light min" aria-label="Minimise New message"></button><span class="light zoom" aria-hidden="true"></span></div><span class="wtitle">New message</span><button type="button" class="back" aria-label="Back to home screen">‹ Home</button></header><div class="wbody"><div class="mail"><div class="m-head"><span>To:</span> hello@denis.zone</div><div class="m-head"><span>Subject:</span> Hello</div><p>The best conversations usually start with a good question. If you've got one, I'd love to hear it.</p><div class="m-actions"><a class="btn" href="mailto:hello@denis.zone">Send an email ↗</a><a class="btn ghost" href="https://www.linkedin.com/in/martinsdenis/" target="_blank" rel="noopener">LinkedIn ↗</a><a class="btn ghost" href="https://github.com/bornonthe12th" target="_blank" rel="noopener">GitHub ↗</a></div></div></div></section>
+  <nav class="dock" aria-label="Dock"><button type="button" class="app-icon" data-open="about" aria-label="Open About"><span class="glyph" style="background:#f36e45"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg></span><span class="app-label">About</span><i class="run-dot" aria-hidden="true"></i></button><button type="button" class="app-icon" data-open="journey" aria-label="Open Journey"><span class="glyph" style="background:#3d7be0"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h13"/><circle cx="19" cy="12" r="1.6"/></svg></span><span class="app-label">Journey</span><i class="run-dot" aria-hidden="true"></i></button><button type="button" class="app-icon" data-open="work" aria-label="Open Work"><span class="glyph" style="background:#202b30"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/></svg></span><span class="app-label">Work</span><i class="run-dot" aria-hidden="true"></i></button><button type="button" class="app-icon" data-open="terminal" aria-label="Open Terminal"><span class="glyph" style="background:#111"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 8 4 4-4 4M12 17h7"/></svg></span><span class="app-label">Terminal</span><i class="run-dot" aria-hidden="true"></i></button><button type="button" class="app-icon" data-open="sim" aria-label="Open Simulator"><span class="glyph" style="background:#6b4bd8"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="6" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="12" cy="18" r="2"/><path d="M7 6h10M6 8l5 8.3M18 8l-5 8.3"/></svg></span><span class="app-label">Simulator</span><i class="run-dot" aria-hidden="true"></i></button><button type="button" class="app-icon" data-open="notes" aria-label="Open Notes"><span class="glyph" style="background:#f2c94c"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 12h7M9 16h5"/></svg></span><span class="app-label">Notes</span><i class="run-dot" aria-hidden="true"></i></button><button type="button" class="app-icon" data-open="duel" aria-label="Open Word Duel"><span class="glyph" style="background:#1f6f58"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="7" height="10" rx="1.5"/><rect x="14" y="7" width="7" height="10" rx="1.5"/><path d="M10 12h4"/></svg></span><span class="app-label">Word Duel</span><i class="run-dot" aria-hidden="true"></i></button><button type="button" class="app-icon" data-open="timer" aria-label="Open Timer"><span class="glyph" style="background:#c8102e"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="7.5"/><path d="M12 9v4l2.5 2M10 2h4"/></svg></span><span class="app-label">Timer</span><i class="run-dot" aria-hidden="true"></i></button><button type="button" class="app-icon" data-open="mail" aria-label="Open Mail"><span class="glyph" style="background:#2f80ed"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span><span class="app-label">Mail</span><i class="run-dot" aria-hidden="true"></i></button></nav>
+</main>
+<script>(() => {
+const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const boot = $('#boot'), lock = $('#lock'), desktop = $('#desktop');
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const phone = () => matchMedia('(max-width: 760px)').matches;
+const params = new URLSearchParams(location.search);
+
+/* ---------- clock ---------- */
+const tick = () => {
+  const d = new Date();
+  $('#lock-date').textContent = d.toLocaleDateString('en-GB', {weekday: 'long', day: 'numeric', month: 'long'});
+  $('#lock-time').textContent = d.toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit'});
+  $('#bar-time').textContent = d.toLocaleDateString('en-GB', {weekday: 'short', day: 'numeric', month: 'short'}) + '  ' + d.toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit'});
+};
+tick(); setInterval(tick, 10000);
+
+/* ---------- boot ---------- */
+const ua = navigator.userAgent;
+const os = /Android/.test(ua) ? 'Android' : /iPhone|iPad/.test(ua) ? 'iOS' : /Mac/.test(ua) ? 'macOS' : /Win/.test(ua) ? 'Windows' : /Linux/.test(ua) ? 'Linux' : 'a computer';
+const br = /Edg\//.test(ua) ? 'Edge' : /Firefox\//.test(ua) ? 'Firefox' : /Chrome\//.test(ua) ? 'Chrome' : /Safari\//.test(ua) ? 'Safari' : 'a browser';
+const lines = ['<b>DenisOS 17.0</b>  (build 2009 → 2026)', '', `Hello. Your browser says: <b>${os} · ${br}</b>`,
+  'mounting /work ............ <i>ok</i>', 'mounting /journey ......... <i>ok</i>', 'connecting integrations ... <i>ok</i>',
+  'starting event bus ........ <i>ok</i>', 'loading /life (arsenal, travel, food, gym) <i>ok</i>', '', 'ready.'];
+let booted = false, bootTimer = 0;
+const endBoot = () => {
+  if (booted) return; booted = true; clearTimeout(bootTimer);
+  boot.classList.add('gone'); setTimeout(() => boot.remove(), 500);
+  removeEventListener('keydown', endBoot); boot.removeEventListener('click', endBoot);
+};
+const seen = (() => { try { return sessionStorage.getItem('dz-booted') } catch { return null } })();
+if (reduced || seen || params.has('app')) { boot.remove(); booted = true; }
+else {
+  try { sessionStorage.setItem('dz-booted', '1') } catch {}
+  addEventListener('keydown', endBoot); boot.addEventListener('click', endBoot);
+  let i = 0; const log = $('#boot-log');
+  const step = () => { if (booted) return; if (i < lines.length) { log.innerHTML += lines[i++] + '\n'; bootTimer = setTimeout(step, i < 3 ? 380 : 220); } else bootTimer = setTimeout(endBoot, 700); };
+  step();
+}
+
+/* ---------- lock ---------- */
+let unlocked = false;
+const unlock = () => {
+  if (unlocked) return; unlocked = true; endBoot();
+  lock.classList.add('gone'); lock.setAttribute('aria-hidden', 'true'); lock.inert = true;
+  desktop.inert = false; desktop.removeAttribute('aria-hidden'); desktop.focus({preventScroll: true});
+};
+desktop.inert = true; desktop.setAttribute('aria-hidden', 'true');
+$('#unlock').addEventListener('click', unlock);
+addEventListener('keydown', e => { if (!unlocked && booted && ['Enter', ' ', 'ArrowUp'].includes(e.key) && e.target === document.body) { e.preventDefault(); unlock(); } });
+lock.addEventListener('wheel', e => { if (e.deltaY > 20) unlock(); }, {passive: true});
+let y0 = null;
+lock.addEventListener('pointerdown', e => { y0 = e.clientY; });
+lock.addEventListener('pointerup', e => { if (y0 !== null && y0 - e.clientY > 60) unlock(); y0 = null; });
+lock.addEventListener('touchstart', e => { y0 = e.touches[0].clientY; }, {passive: true});
+lock.addEventListener('touchend', e => { if (y0 !== null && y0 - e.changedTouches[0].clientY > 60) unlock(); y0 = null; });
+$('.skip-link').addEventListener('click', e => { e.preventDefault(); unlock(); });
+
+/* ---------- windows ---------- */
+let z = 100, opened = 0;
+const setRunning = (app, on) => $$(`.app-icon[data-open="${app}"]`).forEach(b => b.classList.toggle('running', on));
+const front = w => { $$('.window.front').forEach(x => x.classList.remove('front')); w.classList.add('front'); w.style.zIndex = ++z; };
+const open = app => {
+  const w = $('#win-' + app); if (!w) return;
+  if (w.hidden) {
+    w.hidden = false;
+    if (!w.dataset.placed && !phone()) {
+      const W = w.offsetWidth, H = w.offsetHeight, n = opened++ % 6;
+      w.style.left = Math.max(12, Math.min(innerWidth - W - 12, innerWidth / 2 - W / 2 + (n - 2) * 34)) + 'px';
+      w.style.top = Math.max(42, Math.min(innerHeight - H - 96, 70 + n * 26)) + 'px';
+      w.dataset.placed = '1';
+    }
+    w.dataset.opener = document.activeElement?.dataset?.open ? app : '';
+  }
+  front(w); setRunning(app, true);
+  (w.querySelector('#term-in') || w.querySelector('.light.close') || w).focus({preventScroll: true});
+  if (phone()) document.body.style.overflow = 'hidden';
+};
+const close = (w, keepRunning) => {
+  w.hidden = true; if (!keepRunning) setRunning(w.dataset.app, false);
+  if (phone()) document.body.style.overflow = '';
+  const icon = $(`.${phone() ? 'home-grid' : 'dock'} .app-icon[data-open="${w.dataset.app}"]`); icon && icon.focus({preventScroll: true});
+};
+$$('[data-open]').forEach(b => b.addEventListener('click', () => { if (!unlocked) unlock(); open(b.dataset.open); }));
+$$('.window').forEach(w => {
+  w.tabIndex = -1;
+  w.addEventListener('pointerdown', () => front(w));
+  $('.close', w).addEventListener('click', () => close(w));
+  $('.min', w).addEventListener('click', () => close(w, true));
+  $('.back', w).addEventListener('click', () => close(w));
+  const bar = $('.titlebar', w); let drag = null;
+  bar.addEventListener('pointerdown', e => {
+    if (phone() || e.target.closest('button')) return;
+    drag = {x: e.clientX - w.offsetLeft, y: e.clientY - w.offsetTop}; bar.setPointerCapture(e.pointerId);
+  });
+  bar.addEventListener('pointermove', e => {
+    if (!drag) return;
+    w.style.left = Math.max(-w.offsetWidth + 120, Math.min(innerWidth - 120, e.clientX - drag.x)) + 'px';
+    w.style.top = Math.max(30, Math.min(innerHeight - 60, e.clientY - drag.y)) + 'px';
+  });
+  bar.addEventListener('pointerup', () => { drag = null; });
+});
+addEventListener('keydown', e => {
+  if (e.key !== 'Escape' || !unlocked) return;
+  const top = $$('.window:not([hidden])').sort((a, b) => (+b.style.zIndex || 0) - (+a.style.zIndex || 0))[0];
+  if (top) close(top);
+});
+
+/* ---------- notes ---------- */
+$$('.n-item').forEach(b => b.addEventListener('click', () => {
+  $$('.n-item').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  $$('.n-body').forEach(x => { x.hidden = x.dataset.note !== b.dataset.note; });
+  $('.n-view').scrollTop = 0;
+}));
+
+/* ---------- terminal ---------- */
+const log = $('#term-log'), form = $('#term-form'), input = $('#term-in'), hist = []; let cur = 0;
+const apps = {about: 'About', journey: 'Journey', work: 'Work', sim: 'Simulator', notes: 'Notes', duel: 'Word Duel', timer: 'Timer', mail: 'Mail'};
+const C = {
+  help: () => 'Commands:\n  whoami        a little about me\n  ls            list the apps\n  open <app>    open one (e.g. open work)\n  experience    17 years in one paragraph\n  stack         what I work with\n  next          what\'s next\n  arsenal | travel | gym | food\n  contact       say hello\n  clear         clear the screen',
+  whoami: () => 'Denis Martins. Senior software engineer, 17 years in.\nI design integration platforms, own them in production and mentor the people who build them.',
+  ls: () => Object.keys(apps).map(a => a.padEnd(10)).join('') ,
+  experience: () => 'Twelve roles since 2009: reporting, products, lending and payments, clinical research,\nwealth management, telecoms and energy. Type "open journey" for the timeline.',
+  stack: () => 'API design · integrations · event-driven systems · domain modelling\nAzure · AWS · Service Bus/SQS · Terraform · Docker · Datadog\nPHP/Laravel · Java · Go · TypeScript. Tools, not the headline.',
+  next: () => 'Transact. Integrations in financial services.',
+  arsenal: () => 'North London is red. COYG.', travel: () => 'Unfamiliar streets, good food, ideally a sunny coast.',
+  gym: () => 'One more rep.', food: () => 'Have you eaten?', contact: () => 'hello@denis.zone, or "open mail".',
+  sudo: () => 'Nice try.', exit: () => { setTimeout(() => close($('#win-terminal')), 250); return 'logout'; }
+};
+const print = (cmd, out) => {
+  const p = document.createElement('div');
+  p.innerHTML = '<span class="p">denis@os</span>:<span class="d">~</span>$ ';
+  p.append(cmd); if (out) p.append('\n' + out); log.append(p);
+  const body = log.closest('.wbody'); body.scrollTop = body.scrollHeight;
+};
+form.addEventListener('submit', e => {
+  e.preventDefault(); const q = input.value.trim(); input.value = ''; if (!q) return;
+  hist.push(q); cur = hist.length; const [k, arg] = q.toLowerCase().split(/\s+/);
+  if (k === 'clear') { log.textContent = ''; return; }
+  if (k === 'open') { const a = Object.keys(apps).find(x => x === arg || apps[x].toLowerCase() === arg); print(q, a ? 'opening ' + apps[a] + '…' : 'open: no such app. Try "ls".'); if (a) setTimeout(() => open(a), 200); return; }
+  print(q, C[k] ? C[k]() : `zsh: command not found: ${k}. Try "help".`);
+});
+input.addEventListener('keydown', e => {
+  if (e.key === 'ArrowUp' && hist.length) { e.preventDefault(); cur = Math.max(0, cur - 1); input.value = hist[cur]; }
+  if (e.key === 'ArrowDown' && hist.length) { e.preventDefault(); cur = Math.min(hist.length, cur + 1); input.value = hist[cur] || ''; }
+});
+$('#win-terminal .wbody').addEventListener('click', () => input.focus());
+
+/* ---------- deep link: ?app=work ---------- */
+if (params.has('app')) { unlock(); open(params.get('app')); }
+})();
+</script>
+<script>(()=>{(()=>{
+const timerButton=document.getElementById('timer-action'),timerDisplay=document.getElementById('timer-display'),timerProgress=document.getElementById('timer-progress'),timerFeedback=document.getElementById('timer-feedback');
+let timerStart=0,timerRunning=false,timerFrame=0;
+const formatTime=ms=>{const hundredths=Math.floor(ms/10),whole=Math.floor(hundredths/100),fraction=String(hundredths%100).padStart(2,'0');return '00:'+String(whole).padStart(2,'0')+'<span>.'+fraction+'</span>'};
+const paintTimer=ms=>{timerDisplay.innerHTML=formatTime(ms);timerProgress.style.width=Math.min(ms/5000*100,100)+'%'};
+const tick=()=>{if(!timerRunning)return;paintTimer(performance.now()-timerStart);timerFrame=requestAnimationFrame(tick)};
+timerButton.addEventListener('click',()=>{
+ if(!timerRunning){timerRunning=true;timerStart=performance.now();timerButton.textContent='Stop timer';timerFeedback.textContent='Aim for 5.00 seconds';paintTimer(0);timerFrame=requestAnimationFrame(tick);return}
+ timerRunning=false;cancelAnimationFrame(timerFrame);const elapsed=performance.now()-timerStart;paintTimer(elapsed);const offset=Math.abs(elapsed-5000);timerFeedback.textContent=offset<50?'Almost perfect!':offset<250?'Very close!':'Off by '+(offset/1000).toFixed(2)+'s. Try again.';timerButton.textContent='Try again';
+});
+const miniWords=new Set("ABED ABET ABLE ABLY ABUT ACED ACES ACHE ACHY ACID ACME ACNE ACRE ACTS ADDS ADZE AEON AFAR AGAR AGED AGES AGOG AGUE AHEM AHOY AIDE AIDS AILS AIMS AIRS AIRY AJAR AKIN ALAS ALBS ALES ALGA ALLY ALMS ALOE ALSO ALTO ALUM AMEN AMID AMMO AMOK AMPS ANEW ANKH ANON ANTE ANTI ANTS APED APES APEX APPS APSE AQUA ARCH ARCS AREA ARES ARIA ARID ARKS ARMS ARMY ARTS ARTY ASHY ASKS ASPS ATOM ATOP AUKS AUNT AURA AUTO AVER AVID AVOW AWAY AWED AWES AWLS AWRY AXED AXES AXIS AXLE AXON AYES BAAS BABE BABY BACK BADE BAGS BAIL BAIT BAKE BALD BALE BALK BALL BALM BAND BANE BANG BANI BANK BANS BARB BARD BARE BARF BARK BARN BARS BASE BASH BASK BASS BAST BATE BATH BATS BAUD BAWL BAYS BEAD BEAK BEAM BEAN BEAR BEAT BEAU BECK BEDS BEEF BEEN BEEP BEER BEES BEET BEGS BELL BELT BEND BENT BERG BERM BEST BETA BETS BEVY BIAS BIBS BIDE BIDS BIER BIKE BILE BILK BILL BIND BINS BIRD BITE BITS BLAB BLAH BLED BLEW BLIP BLOB BLOC BLOG BLOT BLOW BLUE BLUR BOAR BOAS BOAT BOBS BODE BODY BOGS BOIL BOLA BOLD BOLE BOLL BOLT BOMB BOND BONE BONG BONY BOOK BOOM BOON BOOR BOOS BOOT BOPS BORE BORN BOSH BOSS BOTH BOUT BOWL BOWS BOYS BOZO BRAD BRAG BRAN BRAS BRAT BRAY BRED BREW BRIG BRIM BROW BUCK BUDS BUFF BUGS BULB BULK BULL BUMP BUMS BUNG BUNK BUNS BUNT BUOY BURG BURN BURP BURR BURS BURY BUSH BUSS BUST BUSY BUTS BUYS BUZZ BYES BYTE CABS CADS CAGE CAKE CALF CALK CALL CALM CAME CAMP CAMS CANE CANS CANT CAPE CAPS CARD CARE CARP CARS CART CASE CASH CASK CAST CATS CAVE CAWS CEDE CELL CENT CHAP CHAR CHAT CHEF CHEW CHIC CHIN CHIP CHIT CHOP CHOW CHUG CHUM CITE CITY CLAD CLAM CLAN CLAP CLAW CLAY CLEF CLEW CLIP CLOD CLOG CLOP CLOT CLOY CLUB CLUE COAL COAT COAX COBS CODA CODE CODS COED COGS COIF COIL COIN COKE COLA COLD COLS COLT COMA COMB COME CONE CONK CONS COOK COOL COOP COOS COOT COPE COPS COPY CORD CORE CORK CORM CORN COST COSY COTE COTS COUP COVE COWL COWS COZY CRAB CRAG CRAM CRAW CREW CRIB CROP CROW CRUD CRUX CUBE CUBS CUDS CUED CUES CUFF CULL CULT CUPS CURB CURD CURE CURL CURS CURT CUSP CUSS CUTE CUTS CYST CZAR DABS DADO DADS DAFT DAIS DALE DAME DAMP DAMS DANK DARE DARK DARN DART DASH DATA DATE DAUB DAWN DAYS DAZE DEAD DEAF DEAL DEAN DEAR DEBS DEBT DECK DEED DEEM DEEP DEER DEFT DEFY DELI DELL DEMO DENS DENT DENY DESK DEWY DIAL DICE DIED DIES DIET DIGS DILL DIME DIMS DINE DING DINS DINT DIPS DIRE DIRK DIRT DISC DISH DISK DIVA DIVE DOCK DOCS DODO DOER DOES DOFF DOGS DOLE DOLL DOLT DOME DONE DONS DOOM DOOR DOPE DORK DORM DORY DOSE DOTE DOTH DOTS DOUR DOVE DOWN DOZE DRAB DRAG DRAM DRAW DRAY DREW DRIP DROP DRUB DRUG DRUM DRYS DUAL DUBS DUCK DUCT DUDE DUDS DUEL DUES DUET DUFF DUKE DULL DULY DUMB DUMP DUNE DUNG DUNK DUNS DUOS DUPE DUSK DUST DUTY DYED DYER DYES EACH EARL EARN EARS EASE EAST EASY EATS EAVE EBBS ECHO ECRU EDDY EDGE EDGY EDIT EELS EGGS EGOS EKED EKES ELKS ELLS ELMS ELSE EMIR EMIT EMOS EMUS ENDS ENVY EONS EPIC ERAS ERGO ERGS ERRS ESPY ETCH EURO EVEN EVER EVES EVIL EWER EWES EXAM EXEC EXES EXIT EXPO EYED EYES FACE FACT FADE FADS FAIL FAIN FAIR FAKE FALL FAME FANG FANS FARE FARM FAST FATE FATS FAUN FAWN FAZE FEAR FEAT FEDS FEED FEEL FEES FEET FELL FELT FEND FENS FERN FEST FETA FEUD FIAT FIBS FIEF FIFE FIGS FILE FILL FILM FIND FINE FINK FINS FIRE FIRM FIRS FISH FIST FITS FIVE FIZZ FLAB FLAG FLAK FLAN FLAP FLAT FLAW FLAX FLAY FLEA FLED FLEE FLEW FLEX FLIP FLIT FLOE FLOG FLOP FLOW FLUB FLUE FLUX FOAL FOAM FOBS FOES FOGS FOGY FOIL FOLD FOLK FOND FONT FOOD FOOL FOOT FOPS FORD FORE FORK FORM FORT FOUL FOUR FOWL FOXY FRAT FRAY FREE FRET FROG FROM FUEL FULL FUME FUND FUNK FURL FURS FURY FUSE FUSS FUTZ FUZZ GABS GADS GAFF GAGS GAIN GAIT GALA GALE GALL GALS GAME GAMY GANG GAPE GAPS GARB GASH GASP GATE GAVE GAWK GAZE GEAR GEED GEEK GEES GELD GELS GEMS GENE GENT GERM GETS GIBE GIFT GIGS GILD GILL GILT GINS GIRD GIRL GIRT GIST GIVE GLAD GLEE GLEN GLIB GLOB GLOP GLOW GLUE GLUM GLUT GNAT GNAW GNUS GOAD GOAL GOAT GOBS GODS GOES GOLD GOLF GONE GONG GOOD GOOF GOON GOOP GORE GORY GOSH GOUT GOWN GRAB GRAD GRAM GRAY GREW GREY GRID GRIM GRIN GRIP GRIT GROG GROW GRUB GUFF GULF GULL GULP GUMS GUNK GUNS GURU GUSH GUST GUTS GUYS GYBE GYMS GYPS GYRO HACK HAFT HAGS HAIL HAIR HAKE HALE HALF HALL HALO HALT HAMS HAND HANG HANK HARD HARE HARK HARM HARP HART HASH HASP HATE HATH HATS HAUL HAVE HAWK HAWS HAYS HAZE HAZY HEAD HEAL HEAP HEAR HEAT HECK HEED HEEL HEFT HEIR HELD HELM HELP HEMP HEMS HENS HERB HERD HERE HERO HERS HEWS HICK HIDE HIED HIES HIGH HIKE HILL HILT HIMS HIND HINT HIPS HIRE HISS HITS HIVE HOAX HOBO HOBS HOCK HODS HOED HOGS HOLD HOLE HOLY HOME HONE HONK HOOD HOOF HOOK HOOP HOOT HOPE HOPS HORN HOSE HOST HOUR HOVE HOWL HOWS HUBS HUED HUES HUFF HUGE HUGS HULA HULK HULL HUMP HUMS HUNG HUNK HUNT HURL HURT HUSH HUSK HUTS HYMN HYPE HYPO IAMB IBEX IBIS ICED ICES ICKY ICON IDEA IDES IDLE IDLY IDOL IFFY ILKS ILLS IMAM IMPS INCH INFO INKS INKY INNS INTO IONS IOTA IRIS IRKS IRON ISLE ISMS ITCH ITEM JABS JACK JADE JAGS JAIL JAMB JAMS JAPE JARS JAWS JAYS JAZZ JEEP JEER JEEZ JELL JERK JEST JETS JIBE JIBS JIGS JILT JINN JINX JIVE JOBS JOCK JOGS JOHN JOIN JOKE JOLT JOSH JOTS JOWL JOYS JUDO JUGS JUMP JUNK JURY JUST JUTE JUTS KALE KEEL KEEN KEEP KEGS KELP KENS KEPT KERB KEYS KHAN KICK KIDS KILL KILN KILO KILT KIND KING KINK KISS KITE KITH KITS KIWI KNEE KNEW KNIT KNOT KNOW KOOK LABS LACE LACK LACY LADE LADS LADY LAGS LAID LAIN LAIR LAKE LAMA LAMB LAME LAMP LAMS LAND LANE LANK LAPS LARD LARK LASH LASS LAST LATE LATH LATS LAUD LAVA LAWN LAWS LAYS LAZE LAZY LEAD LEAF LEAK LEAN LEAP LEAS LEEK LEER LEES LEFT LEGS LEIS LEND LENS LENT LESS LEST LETS LEVY LEWD LIAR LICE LICK LIDS LIED LIEF LIEN LIES LIEU LIFE LIFT LIKE LILT LILY LIMB LIME LIMN LIMO LIMP LIMY LINE LINK LINT LION LIPS LIRA LIRE LISP LIST LITE LIVE LOAD LOAF LOAM LOAN LOBE LOBS LOCI LOCK LOCO LODE LOFT LOGE LOGO LOGS LOIN LOLL LONE LONG LOOK LOOM LOON LOOP LOOT LOPE LOPS LORD LORE LORN LOSE LOSS LOST LOTS LOUD LOUT LOVE LOWS LUAU LUBE LUCK LUGS LULL LUMP LUNG LURE LURK LUSH LUST LUTE LYNX LYRE MACE MADE MADS MAID MAIL MAIM MAIN MAKE MALE MALL MALT MAMA MANE MANS MANY MAPS MARE MARK MARS MART MASH MASK MASS MAST MATE MATH MATS MATT MAUL MAWS MAYO MAZE MEAD MEAL MEAN MEAT MEEK MEET MEGS MELD MELT MEME MEMO MEND MENU MEOW MERE MESA MESH MESS METE MEWL MEWS MICA MICE MIEN MIFF MIKE MILD MILE MILK MILL MILS MIME MIND MINE MINI MINK MINT MINX MIRE MISS MIST MITE MITT MOAN MOAT MOBS MOCK MODE MODS MOLD MOLE MOLL MOLT MOMS MONK MONO MOOD MOON MOOR MOOS MOOT MOPE MOPS MORE MORN MOSS MOST MOTE MOTH MOVE MOWS MUCH MUCK MUFF MUGS MULE MULL MUMS MURK MUSE MUSH MUSK MUSS MUST MUTE MUTT MYNA MYTH NABS NAGS NAIL NAME NAPE NAPS NARC NARK NARY NAVE NAVY NAYS NEAR NEAT NECK NEED NEON NERD NEST NETS NEWS NEWT NEXT NIBS NICE NICK NIGH NINE NIPS NITS NODE NODS NOEL NOES NONE NOOK NOON NOPE NORM NOSE NOSH NOSY NOTE NOUN NOUS NOVA NUBS NUKE NULL NUMB NUNS NUTS OAFS OAKS OARS OATH OATS OBEY OBIT OBOE ODDS ODES ODOR OFFS OGLE OGRE OHMS OILS OILY OINK OKAY OKRA OLEO OMEN OMIT ONCE ONES ONLY ONTO ONUS ONYX OOPS OOZE OPAL OPEN OPTS OPUS ORAL ORBS ORCS ORES ORGY OUCH OURS OUST OUTS OVAL OVEN OVER OVUM OWED OWES OWLS OWNS OXEN PACE PACK PACT PADS PAGE PAID PAIL PAIN PAIR PALE PALL PALM PALS PANE PANG PANS PANT PAPA PAPS PARE PARK PARS PART PASS PAST PATE PATH PATS PAVE PAWL PAWN PAWS PAYS PEAK PEAL PEAR PEAS PEAT PECK PECS PEED PEEK PEEL PEEP PEER PEES PEGS PELT PENS PENT PEON PEPS PERK PERM PERT PESO PEST PETS PEWS PICA PICK PIED PIER PIES PIGS PIKE PILE PILL PINE PING PINK PINS PINT PIPE PIPS PITA PITH PITS PITY PLAN PLAY PLEA PLOD PLOP PLOT PLOW PLOY PLUG PLUM PLUS POCK PODS POEM POET POKE POKY POLE POLL POLO POLS POMP POND PONE PONY POOH POOL POOR POPE POPS PORE PORK PORT POSE POSH POST POSY POTS POUR POUT PRAM PRAY PREP PREY PRIG PRIM PROD PROF PROM PROP PROS PROW PSST PUBS PUCK PUFF PUGS PULL PULP PUMA PUMP PUNK PUNS PUNT PUNY PUPA PUPS PURE PURL PURR PUSH PUSS PUTS PUTT PYRE QUAD QUAY QUID QUIP QUIT QUIZ RACE RACK RACY RAFT RAGA RAGE RAGS RAID RAIL RAIN RAKE RAMP RAMS RANG RANK RANT RAPS RAPT RARE RASH RASP RATE RATS RAVE RAYS RAZE RAZZ READ REAL REAM REAP REAR REDO REDS REED REEF REEK REEL REFS REIN RELY REND RENT REPS REST REVS RHEA RIBS RICE RICH RICK RIDE RIDS RIFE RIFF RIFT RIGS RILE RILL RIME RIMS RIND RING RINK RIOT RIPE RIPS RISE RISK RITE ROAD ROAM ROAN ROAR ROBE ROBS ROCK RODE RODS ROES ROIL ROLE ROLL ROMP ROOD ROOF ROOK ROOM ROOT ROPE ROSE ROSY ROTE ROTS ROUT ROVE ROWS RUBE RUBS RUBY RUDE RUED RUES RUFF RUGS RUIN RULE RUMP RUMS RUNE RUNG RUNS RUNT RUSE RUSH RUSK RUST RUTS SACK SACS SAFE SAGA SAGE SAGO SAGS SAID SAIL SAKE SAKI SALE SALT SAME SAND SANE SANG SANK SANS SAPS SARI SASH SASS SATE SAVE SAWS SAYS SCAB SCAD SCAM SCAN SCAR SCAT SCOW SCUD SEAL SEAM SEAR SEAS SEAT SECS SECT SEED SEEK SEEM SEEN SEEP SEER SEES SELF SELL SEMI SEND SENT SERE SERF SETS SEWN SEWS SHAD SHAH SHAM SHED SHES SHIM SHIN SHIP SHOD SHOE SHOO SHOP SHOT SHOW SHUN SHUT SICK SICS SIDE SIFT SIGH SIGN SILK SILL SILO SILT SIMS SINE SING SINK SINS SIPS SIRE SIRS SITE SITS SIZE SKEW SKID SKIM SKIN SKIP SKIS SKIT SLAB SLAM SLAP SLAT SLAW SLAY SLED SLEW SLID SLIM SLIP SLIT SLOB SLOE SLOG SLOP SLOT SLOW SLUE SLUG SLUM SLUR SMOG SMUG SNAG SNAP SNIP SNIT SNOB SNOT SNOW SNUB SNUG SOAK SOAP SOAR SOBS SOCK SODA SODS SOFA SOFT SOIL SOLD SOLE SOLO SOLS SOME SONG SONS SOON SOOT SOPS SORE SORT SOTS SOUL SOUP SOUR SOWN SOWS SPAM SPAN SPAR SPAS SPAT SPAY SPEC SPED SPEW SPIN SPIT SPOT SPRY SPUD SPUN SPUR STAB STAG STAR STAY STEM STEP STEW STIR STOP STOW STUB STUD STUN SUBS SUCH SUCK SUDS SUED SUES SUET SUIT SULK SUMO SUMP SUMS SUNG SUNK SUNS SUPS SURE SURF SWAB SWAG SWAM SWAN SWAP SWAT SWAY SWIG SWIM SWUM SYNC TABS TACK TACO TACT TADS TAGS TAIL TAKE TALC TALE TALK TALL TAME TAMP TAMS TANG TANK TANS TAPE TAPS TARE TARO TARP TARS TART TASK TATS TAUT TAXI TEAK TEAL TEAM TEAR TEAS TEAT TEED TEEM TEEN TEES TELL TEMP TEND TENS TENT TERM TERN TEST TEXT THAN THAT THAW THEE THEM THEN THEY THIN THIS THOU THRU THUD THUG THUS TICK TICS TIDE TIDY TIED TIER TIES TIFF TILE TILL TILT TIME TINE TING TINS TINT TINY TIPS TIRE TOAD TOED TOES TOFU TOGA TOGS TOIL TOKE TOLD TOLL TOMB TOME TOMS TONE TONG TONS TONY TOOK TOOL TOOT TOPS TORE TORN TORS TORT TOSS TOTE TOTS TOUR TOUT TOWN TOWS TOYS TRAM TRAP TRAY TREE TREK TRIG TRIM TRIO TRIP TROD TROT TROY TRUE TSAR TUBA TUBE TUBS TUCK TUFT TUGS TUNA TUNE TUNS TURF TURN TUSH TUSK TUTU TWEE TWIG TWIN TWIT TWOS TYKE TYPE TYPO TYRE TYRO UGLY ULNA UMPS UNDO UNIT UNTO UPON UREA URGE URIC URNS USED USER USES VAIN VALE VAMP VANE VANS VAPE VARY VASE VAST VATS VEAL VEEP VEER VEIL VEIN VELD VEND VENT VERB VERY VEST VETO VETS VIAL VIBE VICE VIED VIES VIEW VILE VINE VIOL VISA VISE VIVA VOID VOLE VOLT VOTE VOWS WACK WADE WADI WADS WAFT WAGE WAGS WAIF WAIL WAIT WAKE WALE WALK WALL WAND WANE WANT WARD WARE WARM WARN WARP WARS WART WARY WASH WASP WATT WAVE WAVY WAXY WAYS WEAK WEAL WEAN WEAR WEBS WEDS WEED WEEK WEEP WEER WEES WEFT WEIR WELD WELL WELT WEND WENS WENT WEPT WERE WEST WETS WHAM WHAT WHEN WHET WHEW WHEY WHIM WHIP WHIR WHIT WHIZ WHOA WHOM WHYS WICK WIDE WIFE WIGS WIKI WILD WILE WILL WILT WILY WIMP WIND WINE WING WINK WINO WINS WIPE WIRE WIRY WISE WISH WISP WIST WITH WITS WIVE WOES WOKE WOKS WOLF WOMB WONT WOOD WOOF WOOL WOOS WORD WORE WORK WORM WORN WOVE WOWS WRAP WREN WRIT WUSS YAKS YAMS YANK YAPS YARD YARN YAWL YAWN YAWS YEAH YEAR YEAS YELL YELP YENS YEPS YEST YETI YEWS YIPS YOGA YOGI YOKE YOLK YORE YOUR YOWL YUCK YUKS YULE YUPS ZANY ZAPS ZEAL ZEBU ZEDS ZERO ZEST ZETA ZINC ZING ZIPS ZITS ZONE ZOOM ZOOS".split(' '));
+const miniStarts=['TALK','MAIL','WIND','GAME','FIRE','SAND'];let miniIndex=0,miniCurrent='',miniDraft='',miniSelected=0,miniUsed=new Set(),miniScore=0;
+let miniDeadline=0,miniTimerId=0,miniEnded=false,miniDefinitionRequest=0;
+const miniTime=document.getElementById('word-mini-time'),miniLast=document.getElementById('word-mini-last'),miniMeaning=document.getElementById('word-mini-meaning'),miniCurrentLabel=document.getElementById('word-mini-current'),miniHistory=document.getElementById('word-mini-history'),miniSubmitButton=document.getElementById('word-mini-submit');
+const miniDefinitions={TALK:'To speak or discuss something.',MAIL:'Letters and parcels sent or received.',WIND:'Moving air.',GAME:'An activity played for enjoyment.',FIRE:'Heat and light produced by burning.',SAND:'Tiny grains of rock found on beaches.'};
+const miniDefinitionCache=new Map(Object.entries(miniDefinitions));
+async function miniShowMeaning(word){
+ miniCurrentLabel.textContent=word;
+ const request=++miniDefinitionRequest;
+ const saved=miniDefinitionCache.get(word);
+ if(saved){miniMeaning.textContent=saved;return}
+ miniMeaning.textContent='Finding the meaning…';
+ const clean=word.toLowerCase();
+ let definition='';
+ try{
+  const response=await fetch('https://api.dictionaryapi.dev/api/v2/entries/en/'+encodeURIComponent(clean));
+  if(response.ok){
+   const entries=await response.json();
+   definition=(entries?.[0]?.meanings||[]).flatMap(item=>item.definitions||[]).map(item=>item.definition).find(Boolean)||'';
+  }
+ }catch(error){}
+ if(!definition){
+  try{
+   const response=await fetch('https://api.datamuse.com/words?sp='+encodeURIComponent(clean)+'&md=d&max=8');
+   if(response.ok){
+    const entries=await response.json();
+    const exact=entries.find(item=>item.word?.toLowerCase()===clean);
+    const raw=exact?.defs?.[0]||'';
+    definition=raw.includes('\t')?raw.slice(raw.indexOf('\t')+1).trim():raw.trim();
+   }
+  }catch(error){}
+ }
+ if(request!==miniDefinitionRequest)return;
+ if(definition){miniDefinitionCache.set(word,definition);miniMeaning.textContent=definition}
+ else{miniMeaning.textContent='No definition found for '+word+'. You can still use it in the game.'}
+}
+function miniTick(){
+ if(miniEnded)return;
+ const remaining=Math.max(0,Math.ceil((miniDeadline-performance.now())/1000));
+ miniTime.textContent=Math.floor(remaining/60)+':'+String(remaining%60).padStart(2,'0');
+ document.getElementById('word-mini').classList.toggle('time-low',remaining<=10);
+ if(remaining===0){miniEnded=true;clearInterval(miniTimerId);miniSubmitButton.disabled=true;miniFeedback.textContent='Time! '+miniScore+' valid '+(miniScore===1?'word':'words')+' before the timer ran out. Start a new round to play again.'}
+}
+function miniRefreshHistory(){miniHistory.textContent=[...miniUsed].join(' → ')}
+
+const miniTileBox=document.getElementById('word-mini-tiles'),miniFeedback=document.getElementById('word-mini-feedback'),miniStreak=document.getElementById('word-mini-streak'),miniAlphabet=document.getElementById('word-mini-alphabet');
+const miniTiles=Array.from({length:4},(_,index)=>{const b=document.createElement('button');b.type='button';b.className='word-mini-tile';b.setAttribute('aria-label','Edit letter '+(index+1));b.setAttribute('aria-pressed','false');b.addEventListener('click',()=>{miniSelected=index;miniPaint()});miniTileBox.append(b);return b});
+function miniPaint(){miniTiles.forEach((tile,i)=>{tile.textContent=miniDraft[i];tile.classList.toggle('changed',miniDraft[i]!==miniCurrent[i]);tile.classList.toggle('selected',miniSelected===i);tile.setAttribute('aria-pressed',String(miniSelected===i));tile.setAttribute('aria-label','Letter '+(i+1)+': '+miniDraft[i]+(miniSelected===i?', selected':''))})}
+function miniSetLetter(letter){if(miniEnded)return;miniDraft=miniDraft.slice(0,miniSelected)+letter+miniDraft.slice(miniSelected+1);miniPaint();miniFeedback.textContent='Submit when you have changed one letter.'}
+for(const letter of 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'){const b=document.createElement('button');b.type='button';b.textContent=letter;b.setAttribute('aria-label','Set selected letter to '+letter);b.addEventListener('click',()=>miniSetLetter(letter));miniAlphabet.append(b)}
+function miniNewRound(){
+ clearInterval(miniTimerId);miniCurrent=miniStarts[miniIndex++%miniStarts.length];miniDraft=miniCurrent;miniSelected=0;miniUsed=new Set([miniCurrent]);miniScore=0;miniEnded=false;miniDeadline=performance.now()+60000;
+ miniStreak.textContent='STREAK 0';miniLast.textContent='—';miniSubmitButton.disabled=false;
+ miniFeedback.textContent='Change one letter at a time. Every valid word resets the 60-second clock.';miniPaint();miniRefreshHistory();miniShowMeaning(miniCurrent);miniTick();miniTimerId=setInterval(miniTick,200);
+}
+function miniSubmit(){
+ if(miniEnded)return;
+ miniTick();if(miniEnded)return;
+ const candidate=miniDraft;const changes=[...candidate].filter((c,i)=>c!==miniCurrent[i]).length;
+ if(changes!==1){miniFeedback.textContent='Change exactly one letter.';return}
+ if(!miniWords.has(candidate)){miniFeedback.textContent='Not in the Word Duel four-letter dictionary. Try another.';return}
+ if(miniUsed.has(candidate)){miniFeedback.textContent='Already used this round.';return}
+ miniLast.textContent=miniCurrent;miniCurrent=candidate;miniDraft=candidate;miniUsed.add(candidate);miniScore++;
+ miniStreak.textContent='STREAK '+miniScore;miniDeadline=performance.now()+60000;miniTick();miniPaint();miniRefreshHistory();miniShowMeaning(candidate);
+ const remaining=[...miniWords].some(w=>!miniUsed.has(w)&&[...w].filter((c,i)=>c!==miniCurrent[i]).length===1);
+ miniFeedback.textContent=remaining?'Valid word! Timer reset to 60 seconds.':'Valid word! No unused moves left.';
+}
+miniTileBox.addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();miniSelected=Math.max(0,Math.min(3,miniSelected+(e.key==='ArrowRight'?1:-1)));miniPaint();miniTiles[miniSelected].focus()}else if(/^[a-z]$/i.test(e.key)){e.preventDefault();miniSetLetter(e.key.toUpperCase())}else if(e.key==='Enter'){e.preventDefault();miniSubmit()}});
+document.getElementById('word-mini-submit').addEventListener('click',miniSubmit);document.getElementById('word-mini-reset').addEventListener('click',miniNewRound);miniNewRound();
+})();})();</script>
+<script>(()=>{const sleep=ms=>new Promise(r=>setTimeout(r,ms));let running=false;const chaos={declined:false,slow:false,lag:false,dup:false,bus:false};
+document.querySelectorAll(".chaos-btn").forEach(b=>b.addEventListener("click",()=>{const k=b.dataset.chaos;chaos[k]=!chaos[k];b.setAttribute("aria-pressed",String(chaos[k]))}));
+const hex=n=>[...crypto.getRandomValues(new Uint8Array(n))].map(x=>x.toString(16).padStart(2,"0")).join("");
+const KIND={cmd:"COMMAND",evt:"EVENT",qry:"QUERY",rsp:"REPLY",note:"STEP"};
+function plan(id,key){const s=[],S=(f,t,k,name,detail,o={})=>s.push({f,t,k,name,detail,...o});let v=0;const ev=n=>({store:n+" · v"+(++v)});
+ S(0,1,"cmd","PlaceOrder","Idempotency-Key "+key);
+ S(1,2,"qry","GetQuote","via the anti-corruption layer");
+ if(chaos.slow)S(2,2,"note","Partner B timed out","retry with backoff, 200 ms",{warn:true});
+ S(2,1,"rsp","Quote","3 partner formats → 1 domain model");
+ S(1,1,"note","Order.place()","rules hold → OrderPlaced + outbox, one transaction",ev("OrderPlaced"));
+ S(1,0,"rsp","202 Accepted","orderId "+id);
+ if(chaos.dup){S(0,1,"cmd","PlaceOrder (retry)","same key "+key);S(1,0,"rsp","202 Accepted","same orderId, no new event",{dupe:true})}
+ if(chaos.bus){S(1,1,"note","Message bus unavailable","event waits in the outbox",{warn:true});S(1,1,"note","Bus recovered","outbox relay publishes")}
+ S(1,3,"evt","OrderPlaced","saga starts → AuthorisePayment",{async:true});
+ S(1,5,"evt","OrderPlaced","projector → OrderSummary v1",{async:true,rm:{status:"pending",version:1}});
+ S(0,5,"qry","GET /orders/"+id,"served by the read model");S(5,0,"rsp","200 OK","status: pending (v1)");
+ const fin=chaos.declined?"cancelled":"confirmed";
+ if(chaos.declined){S(3,1,"evt","PaymentDeclined","card refused",{warn:true});S(1,1,"note","Saga compensates","CancelOrder → OrderCancelled",ev("OrderCancelled"));S(1,2,"cmd","ReleaseQuote","undo the earlier step")}
+ else{S(3,1,"evt","PaymentAuthorised","");S(1,1,"note","Saga → ConfirmOrder","OrderConfirmed",ev("OrderConfirmed"))}
+ const evn=chaos.declined?"OrderCancelled":"OrderConfirmed";
+ if(chaos.lag){S(0,5,"qry","GET /orders/"+id,"read model is behind");S(5,0,"rsp","200 OK","status: pending (v1) · stale",{warn:true,stale:true})}
+ S(1,5,"evt",evn,"projector → OrderSummary v2",{async:true,rm:{status:fin,version:2}});
+ S(1,4,"evt",evn,chaos.declined?"‘payment failed’ email, deduped by event id":"confirmation email, deduped by event id",{async:true});
+ S(0,5,"qry","GET /orders/"+id,"read model caught up");S(5,0,"rsp","200 OK","status: "+fin+" (v2)");
+ return {steps:s,fin}}
+document.getElementById("run-demo").addEventListener("click",async()=>{if(running)return;running=true;
+ const btn=document.getElementById("run-demo"),rows=document.getElementById("seq-rows"),store=document.getElementById("estore"),rm=document.getElementById("rmodel"),lessons=document.getElementById("lessons"),fast=matchMedia("(prefers-reduced-motion: reduce)").matches;
+ btn.disabled=true;btn.textContent="ORDER IN FLIGHT…";const id="ord_"+hex(3),key="k-"+hex(2);rows.replaceChildren();store.replaceChildren();rm.className="rmodel";rm.textContent="{ }";lessons.replaceChildren();
+ const {steps,fin}=plan(id,key);const total=0;
+ for(const st of steps){const row=document.createElement("div");row.className="srow";
+  const lbl=document.createElement("div");lbl.className="lbl";const b=document.createElement("span");b.className="badge "+(st.k==="note"?"step":st.k);b.textContent=KIND[st.k];const n=document.createElement("span");n.textContent=st.name;lbl.append(b,n);
+  if(st.detail){const d=document.createElement("small");d.textContent=st.detail;lbl.append(d)}
+  const tr=document.createElement("div");tr.className="row-track";
+  if(st.f===st.t){const d=document.createElement("span");d.className="sdot "+(st.warn?"warn":"ok");d.style.gridColumn=(st.f+1)+" / "+(st.f+2);tr.append(d)}
+  else{const a=document.createElement("span"),lo=Math.min(st.f,st.t),hi=Math.max(st.f,st.t),span=hi-lo+1;a.className="arrow "+st.k+" "+(st.t>st.f?"r":"l")+(st.async?" async":"")+(st.warn?" bad":"");a.style.gridColumn=(lo+1)+" / "+(hi+2);a.style.marginLeft=a.style.marginRight="calc(100% / "+(2*span)+")";tr.append(a)}
+  row.append(lbl,tr);rows.append(row);
+  if(st.store){const li=document.createElement("li");li.textContent=st.store+" · "+id;store.append(li)}
+  if(st.dupe){const li=document.createElement("li");li.className="dupe";li.textContent="(retry ignored: key "+key+" already handled)";store.append(li)}
+  if(st.rm){rm.textContent=JSON.stringify({orderId:id,status:st.rm.status,version:st.rm.version},null,2)}
+  if(st.stale){rm.classList.add("stale")}else if(st.rm){rm.classList.remove("stale")}
+  if(fast)row.classList.add("show");else{await sleep(30);row.classList.add("show");await sleep(st.k==="note"?520:380)}}
+ const L=["<b>Bounded contexts.</b> Ordering, Pricing and Payments each own their model and data, and talk through commands and events, not shared tables.",
+  "<b>Aggregate + event store.</b> The Order aggregate enforces the business rules. Every change is an event appended to its stream (v1, v2), never an update in place.",
+  "<b>CQRS.</b> Writes go in as commands and return 202. Reads come from a separate OrderSummary model, built from events and shaped for queries.",
+  "<b>Saga.</b> Payment is coordinated with events across contexts. No distributed transaction, and every step knows how to undo itself."];
+ if(chaos.declined)L.push("<b>Compensation.</b> Payment failed, so the saga cancelled the order and released the quote. The event stream keeps the full history of why.");
+ if(chaos.slow)L.push("<b>Anti-corruption layer + retry.</b> The partner's timeout and odd formats stayed inside Pricing. The Order model never saw them.");
+ if(chaos.lag)L.push("<b>Eventual consistency.</b> The read model trailed the write side for a moment, so one query was stale. The version number makes that visible, and the UI is built for it.");
+ if(chaos.dup)L.push("<b>Idempotent command handling.</b> The retry carried the same key, so it got the same answer. One order, one event.");
+ if(chaos.bus)L.push("<b>Transactional outbox.</b> The event was saved in the same transaction as the order and published once the bus came back. Nothing lost, nothing sent twice.");
+ lessons.innerHTML=L.map(x=>"<li>"+x+"</li>").join("");btn.disabled=false;btn.textContent="SEND ANOTHER ↗";running=false});
+})();</script>
+</body></html>

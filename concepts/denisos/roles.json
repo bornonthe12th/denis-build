@@ -1,0 +1,156 @@
+[
+ {
+  "company": "Influential Software",
+  "period": "Mar 2009 – Sep 2011",
+  "year": "2009–11",
+  "role": "Software Developer",
+  "sector": "Business software · Reporting",
+  "story": "Where it started: backend systems and month-end reporting for a global sales platform.",
+  "impact": "Where I learned how much a business depends on its reports being right at month end.",
+  "tags": []
+ },
+ {
+  "company": "GForces",
+  "period": "Oct 2011 – Feb 2013",
+  "year": "2011–13",
+  "role": "Backend Developer",
+  "sector": "Automotive software",
+  "story": "Added test coverage to an automotive platform and built a vehicle management system on outside vehicle data.",
+  "impact": "My first live integration: vehicle data from an outside service flowing into a production system, with tests to prove it worked.",
+  "tags": []
+ },
+ {
+  "company": "TME Solutions",
+  "period": "Oct 2013 – Jan 2014",
+  "year": "2013–14",
+  "role": "Developer",
+  "sector": "Software development",
+  "story": "Looked after a bespoke CMS written in plain PHP, with no framework to lean on.",
+  "impact": "Extending code with no framework to lean on, which teaches you why frameworks exist.",
+  "tags": []
+ },
+ {
+  "company": "Huddlebuy",
+  "period": "Feb 2014 – Apr 2015",
+  "year": "2014–15",
+  "role": "Backend Developer → Lead Developer",
+  "sector": "E-commerce · Integrations",
+  "story": "Joined as a backend developer and became lead, owning payments, data encryption and integrations like Salesforce and Twilio.",
+  "impact": "Moving from developer to lead, owning payments, data encryption and third-party integrations.",
+  "tags": []
+ },
+ {
+  "company": "QOREX",
+  "period": "May 2015 – Jun 2016",
+  "year": "2015–16",
+  "role": "Software Engineer · Contract",
+  "sector": "SaaS · Project management",
+  "story": "Built features for a SaaS platform for business planning and project management.",
+  "impact": "A product built around clarity and prioritisation needs features that stay simple to use.",
+  "tags": []
+ },
+ {
+  "company": "IP Centrum",
+  "period": "Feb 2017 – Jul 2018",
+  "year": "2017–18",
+  "role": "PHP Developer · Contract",
+  "sector": "Intellectual property",
+  "story": "Built patent and trademark renewal workflows covering more than 50 countries.",
+  "impact": "One set of workflows had to handle the renewal rules of more than 50 countries without becoming 50 special cases.",
+  "tags": [
+   "AngularJS",
+   "PHP",
+   "MySQL"
+  ]
+ },
+ {
+  "company": "Link Health Group",
+  "period": "Oct 2018 – Mar 2019",
+  "year": "2018–19",
+  "role": "Software Engineer · Contract",
+  "sector": "Health · Education",
+  "story": "Built an education platform with social features, from the TypeScript front end to the Laravel API.",
+  "impact": "Working across the whole stack, from the TypeScript interface to the Laravel API behind it.",
+  "tags": [
+   "TypeScript",
+   "Material UI",
+   "Laravel"
+  ]
+ },
+ {
+  "company": "Deko",
+  "period": "Mar 2019 – Jun 2021",
+  "year": "2019–21",
+  "role": "Software Engineer",
+  "sector": "Fintech · Lending",
+  "story": "Moved lending services out of a legacy monolith into Java services, a piece at a time, using the Strangler Pattern.",
+  "impact": "Evolving a business-critical platform incrementally without interrupting existing lending operations.",
+  "tags": [
+   "Java",
+   "Go",
+   "Python",
+   "AWS SQS",
+   "DDD"
+  ]
+ },
+ {
+  "company": "WorldFirst",
+  "period": "Jul 2021 – Jan 2022",
+  "year": "2021–22",
+  "role": "Senior Software Engineer · Contract",
+  "sector": "Fintech",
+  "story": "Worked on customer registration and account management for a payments platform, including Twilio verification.",
+  "impact": "Onboarding is a customer’s first impression of a financial platform. It has to be secure and still feel easy.",
+  "tags": [
+   "PHP",
+   "Laravel",
+   "Twilio"
+  ]
+ },
+ {
+  "company": "uMotif",
+  "period": "Jan 2022 – Apr 2023",
+  "year": "2022–23",
+  "role": "Senior Software Developer · Contract",
+  "sector": "Healthcare · Clinical research",
+  "story": "Built APIs and configurable patient-data forms used across clinical research studies.",
+  "impact": "One platform had to serve many clinical studies, each with its own questions and validation rules.",
+  "tags": [
+   "PHP",
+   "Laravel",
+   "REST APIs",
+   "AWS SNS"
+  ]
+ },
+ {
+  "company": "Raymond James",
+  "period": "Apr 2023 – Mar 2024",
+  "year": "2023–24",
+  "role": "Software Engineer · Contract",
+  "sector": "Financial services",
+  "story": "Moved a wealth management platform to PHP 8 and MySQL 8, with regression tests to keep releases safe.",
+  "impact": "Reducing migration risk without sacrificing stability for the users who depended on the platform.",
+  "tags": [
+   "PHP 8",
+   "MySQL 8",
+   "PHPUnit"
+  ]
+ },
+ {
+  "company": "Telecom Acquisitions",
+  "period": "Jun 2024 – Oct 2026",
+  "year": "2024–26",
+  "role": "Senior Software Engineer",
+  "sector": "Telecoms · Energy",
+  "story": "Designed supplier-agnostic APIs and event-driven workflows that connect broadband and energy sales to suppliers, on Azure.",
+  "impact": "Making supplier onboarding repeatable, and keeping high-volume sales reliable and easy to change.",
+  "tags": [
+   "Azure",
+   "Service Bus",
+   "Terraform",
+   "Datadog",
+   "PHP",
+   "Laravel"
+  ]
+ }
+]
